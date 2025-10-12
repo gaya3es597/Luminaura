@@ -1,0 +1,651 @@
+<%- include("../../views/partials/user/header") %>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<style>
+  .account-page {
+    display: flex;
+    gap: 40px;
+  }
+
+  .sidebar {
+    width: 250px;
+    background-color: #3a2b3c;
+    color: white;
+    border-radius: 8px;
+    padding: 20px;
+    height: calc(100vh - 150px);
+    position: sticky;
+    top: 80px;
+    flex-shrink: 0;
+  }
+
+  .sidebar h5 {
+    margin-bottom: 30px;
+  }
+
+  .sidebar ul li {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    transition: background 0.2s ease;
+  }
+
+  .sidebar ul li:hover {
+    background-color: #2a2a2a;
+  }
+
+  .sidebar ul li.active {
+    background-color: #2c2c2c;
+    font-weight: bold;
+  }
+
+  .sidebar ul li a {
+    color: white;
+    text-decoration: none;
+    display: block;
+  }
+
+  .sidebar ul li i {
+    margin-right: 10px;
+  }
+
+  .main-content {
+    flex-grow: 1;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+  }
+
+  .main-heading {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 30px;
+    color: #343a40;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 10px;
+  }
+
+  .order-card {
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease;
+  }
+
+  .order-card:hover {
+    transform: scale(1.01);
+  }
+
+  .order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .order-info {
+    flex: 1;
+    min-width: 250px;
+  }
+
+  .order-info div {
+    margin-bottom: 6px;
+  }
+
+  .order-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .products-list {
+    border-top: 1px solid #dee2e6;
+    padding-top: 15px;
+    margin-top: 15px;
+  }
+
+  .order-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    flex-wrap: wrap;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+  }
+
+  .order-item:last-child {
+    border-bottom: none;
+  }
+
+  .order-item img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 8px;
+    background-color: #f0f0f0;
+  }
+
+  .order-item-details {
+    flex: 1;
+    min-width: 220px;
+  }
+
+  .order-item-details div {
+    margin-bottom: 5px;
+  }
+
+  .order-item-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 150px;
+  }
+
+  @media (max-width: 768px) {
+    .account-page {
+      flex-direction: column;
+    }
+
+    .sidebar {
+      width: 100%;
+      position: static;
+      height: auto;
+      border-radius: 0;
+    }
+
+    .main-content {
+      max-height: none;
+      overflow: visible;
+    }
+
+    .order-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .order-buttons {
+      align-items: flex-start;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .order-item {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .order-item-buttons {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="container my-5">
+  <div class="account-page">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h5 class="fw-bold">My Account</h5>
+      <ul class="list-unstyled">
+        <li class="<%= currentPage === 'profile' ? 'active' : '' %>">
+          <a href="/userProfile"><i class="fa-regular fa-user"></i> <%= user.name %></a>
+        </li>
+        <li class="<%= currentPage === 'address' ? 'active' : '' %>">
+          <a href="/userAddress"><i class="fa-solid fa-location-dot"></i> Address</a>
+        </li>
+        <li class="<%= currentPage === 'orders' ? 'active' : '' %>">
+          <a href="/orders"><i class="fa-solid fa-receipt"></i> Orders</a>
+        </li>
+        <li class="<%= currentPage === 'wishlist' ? 'active' : '' %>">
+          <a href="/wishlist"><i class="fa-regular fa-heart"></i> Wishlist</a>
+        </li>
+        <li class="<%= currentPage === 'coupons' ? 'active' : '' %>">
+          <a href="/coupons"><i class="fa-solid fa-gift"></i> Coupons</a>
+        </li>
+        <li class="<%= currentPage === 'wallet' ? 'active' : '' %>">
+          <a href="/wallet"><i class="fa-regular fa-credit-card"></i> Wallet</a>
+        </li>
+        <li>
+          <a href="/logout"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content shadow-sm">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <h2 class="main-heading mb-0">My Orders</h2>
+        <form class="d-flex" action="/orders" method="GET" role="search">
+          <input
+            type="text"
+            name="search"
+            class="form-control me-2"
+            placeholder="Search orders..."
+            style="min-width: 220px;"
+          />
+          <button type="submit" class="btn btn-primary">
+            <i class="fa fa-search"></i>
+          </button>
+        </form>
+      </div>
+      
+      <% 
+      // Group orders by _id (orderId)
+      let groupedOrders = {};
+      orders.forEach(order => {
+        groupedOrders[order._id] = order;
+      });
+      let orderIds = Object.keys(groupedOrders);
+      let hasOrders = orderIds.length > 0;
+      %>
+
+     
+      <% if (hasOrders) { %>
+        <% orderIds.forEach(orderId => {
+  let order = groupedOrders[orderId];
+  let nonCancelledItems = order.orderedItems.filter(item => item.status !== 'cancelled');
+  let calculatedTotal = nonCancelledItems.reduce((acc, item) => acc + item.totalProductPrice, 0);
+  let discount = (order.couponApplied && !order.couponRevoked) ? order.discount : 0;
+  let displayAmount = calculatedTotal - discount;
+%>
+
+
+        <div class="order-card">
+          <div class="order-header">
+            <div class="order-info">
+              <div><strong>Order ID:</strong> <%= order.orderId %></div>
+              <div><strong>Placed On:</strong> <%= new Date(order.createdOn).toLocaleDateString() %></div>
+              <div><strong>Payment Method:</strong> <%= order.paymentMethod %></div>
+              <div><strong>Total Amount:</strong> ₹<%= displayAmount.toFixed(2) %></div>
+              
+              <div>
+                <strong>Payment Status:</strong>
+                <% if (order.paymentStatus==='failed' ) { %>
+                  <span class="badge bg-danger">Payment Failed</span>
+                  <% } else { %>
+                    <span class="badge bg-success">Success</span>
+                    <% } %>
+              </div>
+
+
+            <% if (order.discount> 0 && order.couponApplied && order.couponName) { %>
+              <div class="text-success"><strong>Coupon Applied:</strong>
+                <%= order.couponName %>
+              </div>
+              <% } %>
+
+
+           <% if (order.status.toLowerCase() === 'delivered') { %>
+                <div class="text-success"><strong>Delivered On:</strong> <%= new Date(order.deliveredOn).toLocaleDateString() %></div>
+           <% } %>
+
+           <% if (order.status.toLowerCase() === 'cancelled') { %>
+            <div class="text-danger"><strong>Order Cancelled</strong></div>
+          <% } %>
+
+            </div>
+
+            <% if (order.status.toLowerCase() === 'delivered') { %>
+              <div class="order-buttons" style="justify-content: center;">
+                <!-- <a href="/orders/invoice/<%= order._id %>" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener">
+                  <i class="fa-solid fa-file-invoice"></i> Download Invoice
+                </a> -->
+              </div>
+            <% } %>
+            
+          </div>
+
+          <div class="products-list">
+            <% order.orderedItems.forEach(item => { 
+              // Calculate product total price
+              let productTotal = item.totalProductPrice;
+            %>
+            <div class="order-item">
+              <img src="<%= item.productImages[0] || '/images/default-product.png' %>" alt="<%= item.productName %>" />
+              <div class="order-item-details">
+                <div><strong><%= item.productName %></strong></div>
+                <%
+                const status = item.status || order.status;
+                let statusClass = 'bg-secondary'; // default
+              
+                switch (status.toLowerCase()) {
+                  case 'cancelled':
+                  statusClass = 'bg-danger';
+                    break;
+                  case 'delivered':
+                  statusClass = 'bg-success';
+                    break;
+                  case 'returned':
+                  statusClass = 'bg-success';
+                    break;
+                  case 'pending':
+                  case 'processing':
+                  case 'placed':
+                  statusClass = 'bg-info text-dark';
+                    break;
+                  case 'return_requested':
+                  statusClass = 'bg-warning text-dark';
+                    break;
+                  case 'rejected':
+                  statusClass = 'bg-dark';
+                    break;
+                     case 'failed': // ✅ add this
+                      statusClass = 'bg-danger';
+                      break;
+                }
+              %>
+              <div>
+                <strong>Status:</strong> 
+                <span class="badge <%= statusClass %>">
+                  <%= status.charAt(0).toUpperCase() + status.slice(1) %>
+                </span>
+                
+                <!-- Show corresponding status date -->
+                <% if (status === 'returned' && item.returnedOn) { %>
+                  <div class="small text-muted">Returned On: <%= new Date(item.returnedOn).toLocaleDateString() %></div>
+                <% } else if (status === 'delivered' && item.deliveredOn) { %>
+                  <div class="small text-muted">Delivered On: <%= new Date(item.deliveredOn).toLocaleDateString() %></div>
+                <% } else if (status === 'cancelled' && item.cancelledAt) { %>
+                  <div class="small text-muted">Cancelled On: <%= new Date(item.cancelledAt).toLocaleDateString() %></div>
+                <% } %>
+              </div>
+                <div>Quantity: <%= item.quantity %></div>
+                <div>Price: ₹<%= item.price.toFixed(2) %></div>
+                <div>Total: ₹<%= productTotal.toFixed(2) %></div>
+               
+              </div>
+
+              <% if (order.paymentStatus !== 'failed') { %>
+
+              <div class="order-item-buttons">
+               
+                <a href="/order-details/<%= order._id %>?productId=<%= item._id %>" class="btn btn-outline-primary btn-sm w-100">View Details</a>
+                  <!-- Cancel Order -->
+                  <% if (item.status === 'placed' || item.status === 'processing' || item.status === 'pending') { %>
+                 
+                    <button onclick="cancelOrder('<%= order._id %>','<%= item._id %>')" class="btn btn-outline-danger btn-sm w-100" type="submit">Cancel Order</button>
+               
+              
+                <!-- Request Return -->
+                <% } else if (item.status === 'delivered' && !item.returnReason && item.requestStatus !== 'rejected') { %>
+                  <button onclick="initiateReturn('<%= order._id %>', '<%= item._id %>')" class="btn btn-warning btn-sm w-100">
+                    Request Return
+                  </button>
+              
+                <!-- Cancel Return Request -->
+                <% } else if (item.status === 'return_requested' && item.requestStatus === 'pending') { %>
+                  <button onclick="cancelReturn('<%= order._id %>', '<%= item._id %>')" class="btn btn-danger btn-sm w-100">
+                    Cancel Return Request
+                  </button>
+                  <% } else if (item.status === 'delivered' && item.requestStatus === 'rejected') { %>
+                    <div class="text-danger small mt-2">
+                      Return request was rejected by admin.
+                    </div>
+                  <% } %>
+              </div>
+              <% }  else if(order.paymentStatus === 'failed' && order.paymentMethod === 'online') { %> 
+     <div class="order-item-buttons">
+      <!-- <button onclick="retryPayment('<%= order._id %>')">Retry Payment</button> -->
+
+                </div>
+            </div>
+            <%} }); %>
+          </div>
+        </div>
+
+        <% }); %>
+
+      <% } else { %>
+        <p>No orders found.</p>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Return Modal -->
+<div class="modal fade" id="returnModal" tabindex="-1">
+  <div class="modal-dialog">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title">Return Request</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+              <form id="returnForm">
+                  <div class="mb-3">
+                      <label class="form-label">Return Reason Category</label>
+                      <select class="form-select" id="returnReason" required>
+                          <option value="">Select a reason</option>
+                          <option value="Wrong size">Wrong size</option>
+                          <option value="Damaged product">Damaged product</option>
+                          <option value="Not as described">Not as described</option>
+                          <option value="Quality issues">Quality issues</option>
+                          <option value="Other">Other</option>
+                      </select>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Detailed Description</label>
+                      <textarea class="form-control" id="returnDescription" rows="3" placeholder="Please provide more details about your return reason..." required></textarea>
+                      <small class="text-muted">Please explain the issue in detail to help us better understand your return request.</small>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Upload Images (Optional)</label>
+                      <input type="file" class="form-control" id="returnImages" multiple accept="image/*">
+                      <small class="text-muted">You can upload up to 3 images</small>
+                  </div>
+              </form>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" onclick="submitReturn()">Submit Return Request</button>
+          </div>
+      </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+let currentOrderId = null;
+let currentItemId = null;
+
+function initiateReturn(orderId, itemId) {
+  
+    currentOrderId = orderId;
+    currentItemId = itemId;
+    const modal = new bootstrap.Modal(document.getElementById('returnModal'));
+    
+    modal.show();
+    event.preventDefault();
+}
+
+
+async function cancelReturn(orderId, itemId) {
+    try {
+        const result = await Swal.fire({
+            title: 'Cancel Return Request',
+            text: 'Are you sure you want to cancel your return request?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, cancel it!'
+        });
+
+        if (result.isConfirmed) {
+            const response = await fetch('/orders/cancel-return', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ orderId, itemId }),
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Return request cancelled successfully',
+                    timer: 1500
+                });
+                location.reload();
+            } else {
+                throw new Error(data.message);
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        await Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'Failed to cancel return request'
+        });
+    }
+}
+
+
+async function cancelOrder(orderId,itemId) {
+    const { value: reasonOption } = await Swal.fire({
+        title: 'Cancel Order',
+        input: 'select',
+        inputLabel: 'Select a reason for cancellation',
+        inputOptions: {
+            'Ordered by mistake': 'Ordered by mistake',
+            'Found a better price': 'Found a better price',
+            'Delivery took too long': 'Delivery took too long',
+            'Item no longer needed': 'Item no longer needed',
+            'Changed my mind': 'Changed my mind',
+            'Wrong item ordered': 'Wrong item ordered',
+            'Other': 'Other'
+        },
+        showCancelButton: true
+    });
+
+    if (!reasonOption) return;
+
+    let finalReason = reasonOption;
+
+    if (reasonOption === 'Other') {
+        const { value: otherReason } = await Swal.fire({
+            title: 'Cancel Order',
+            input: 'textarea',
+            inputLabel: 'Please provide a reason for cancellation',
+            inputPlaceholder: 'Type your reason here...',
+            showCancelButton: true,
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'You need to provide a reason!';
+                }
+            }
+        });
+
+        if (!otherReason) return;
+        finalReason = otherReason;
+    }
+
+    try {
+        const response = await fetch('/orders/cancel', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ orderId,itemId, reason: finalReason }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Order cancelled successfully',
+                timer: 1500
+            });
+            location.reload();
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        await Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'Failed to cancel order'
+        });
+    }
+}
+
+async function submitReturn() {
+    try {
+        const reasonSelect = document.getElementById('returnReason');
+        const returnDescription = document.getElementById('returnDescription');
+        const imagesInput = document.getElementById('returnImages');
+        
+        const returnReason = reasonSelect.value;
+        const description = returnDescription.value;
+
+        if (!returnReason || !description) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Please select a reason category and provide a detailed description!',
+            });
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('orderId', currentOrderId);
+        formData.append('itemId',currentItemId)
+        formData.append('returnReason', returnReason);
+        formData.append('returnDescription', description);
+
+        const files = imagesInput.files;
+        for (let i = 0; i < Math.min(files.length, 3); i++) {
+            formData.append('images', files[i]);
+        }
+
+        const response = await fetch('/orders/return', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: 'Return request submitted successfully!',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: error.message || 'Failed to submit return request',
+        });
+    }
+}
+
+
+</script>
+
+<%- include("../../views/partials/user/footer") %>

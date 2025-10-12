@@ -9,11 +9,24 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.2.1",
     "ejs": "^3.1.10",
+    "exceljs": "^4.4.0",
     "express": "^5.1.0",
+    "express-session": "^1.18.2",
     "mongodb": "^6.18.0",
     "mongoose": "^8.17.1",
-    "nodemon": "^3.1.10"
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.5",
+    "nodemon": "^3.1.10",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "pdfkit": "^0.17.2",
+    "puppeteer": "^24.22.2",
+    "razorpay": "^2.9.6",
+    "session": "^0.1.0",
+    "sharp": "^0.34.3",
+    "uuid": "^13.0.0"
   }
 }

@@ -1,0 +1,333 @@
+<%- include("../../views/partials/user/header") %>
+
+<style>
+  .btn-save-changes {
+    background-color: #d26a5c;
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+  }
+
+  .btn-save-changes:hover {
+    background-color: #ea887b;
+    color: white;
+  }
+  .account-page {
+    display: flex;
+    gap: 40px;
+  }
+
+  .sidebar {
+    width: 250px;
+    background-color: #3a2b3c;
+    color: white;
+    border-radius: 8px;
+    padding: 20px;
+    height: calc(100vh - 150px);
+    position: sticky;
+    top: 80px;
+    flex-shrink: 0;
+  }
+
+  .sidebar h5 {
+    margin-bottom: 30px;
+  }
+
+  .sidebar ul li {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    transition: background 0.2s ease;
+  }
+
+  .sidebar ul li:hover {
+    background-color: #2a2a2a;
+  }
+
+  .sidebar ul li.active {
+    background-color: #2c2c2c;
+    font-weight: bold;
+  }
+
+  .sidebar ul li a {
+    color: white;
+    text-decoration: none;
+    display: block;
+  }
+
+  .sidebar ul li i {
+    margin-right: 10px;
+  }
+
+  .main-content {
+    flex-grow: 1;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+  }
+
+  @media (max-width: 768px) {
+    .account-page {
+      flex-direction: column;
+    }
+
+    .sidebar {
+      width: 100%;
+      position: static;
+      height: auto;
+      border-radius: 0;
+    }
+
+    .main-content {
+      max-height: none;
+      overflow: visible;
+    }
+
+    
+
+  }
+</style>
+
+<div class="container my-5">
+  <div class="account-page">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h5 class="fw-bold">My Account</h5>
+      <ul class="list-unstyled">
+        <li class="<%= currentPage === 'profile' ? 'active' : '' %>">
+          <a href="/userProfile"><i class="fa-regular fa-user"></i> <%= user.name %></a>
+        </li>
+        <li class="<%= currentPage === 'address' ? 'active' : '' %>">
+          <a href="/userAddress"><i class="fa-solid fa-location-dot"></i> Address</a>
+        </li>
+        <li class="<%= currentPage === 'orders' ? 'active' : '' %>">
+          <a href="/orders"><i class="fa-solid fa-receipt"></i> Orders</a>
+        </li>
+        <li class="<%= currentPage === 'wishlist' ? 'active' : '' %>">
+          <a href="/wishlist"><i class="fa-regular fa-heart"></i> Wishlist</a>
+        </li>
+        <!-- <li class="<%= currentPage === 'coupons' ? 'active' : '' %>">
+          <a href="/coupons"><i class="fa-solid fa-gift"></i> Coupons</a>
+        </li>
+        <li class="<%= currentPage === 'wallet' ? 'active' : '' %>">
+          <a href="wallet"><i class="fa-regular fa-credit-card"></i> Wallet</a>
+        </li> -->
+      
+        <li>
+          <a href="/logout"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content shadow-sm">
+      <form action="/update-profile" method="POST" enctype="multipart/form-data" onsubmit="return validateProfileForm()">
+
+       
+
+        <!-- Profile Image -->
+        <div class="text-center mb-4">
+          <div class="position-relative d-inline-block">
+            <img
+              id="profilePreview"
+              src="<%= user.profilePicture ? user.profilePicture : '/images/default-user.png' %>"
+              class="rounded-circle mb-3"
+              width="100"
+              height="100"
+              alt="Profile Picture"
+            />
+          </div>
+
+          <input
+            type="file"
+            id="profileInput"
+            name="profileImage"
+            accept="image/*"
+            class="d-none"
+            onchange="previewImage(event)"
+          />
+
+          <div>
+            <button
+              type="button"
+              class="btn btn-primary btn-sm mt-2"
+              onclick="document.getElementById('profileInput').click();"
+            >
+              Edit Profile Picture
+            </button>
+          </div>
+        </div>
+        <div id="profileFormError" class="text-danger mb-3"></div>
+        <!-- Name -->
+        <div class="mb-3">
+          <label for="name" class="form-label fw-bold">Name:</label>
+          <input type="text" class="form-control bg-secondary-subtle" id="name" name="name" value="<%= user.name %>" >
+        </div>
+
+        <!-- Email -->
+        <div class="mb-3 d-flex align-items-center justify-content-between">
+          <div class="w-75">
+            <label for="email" class="form-label fw-bold">Email:</label>
+            <input type="email" class="form-control bg-secondary-subtle" id="email" name="email" value="<%= user.email %>" disabled >
+          </div>
+          <!-- <button type="button" class="btn btn-outline-primary mt-4 ms-3">Change</button> -->
+          <a class="btn btn-outline-primary mt-4 ms-3" href="/change-email">Change Your Email</a>
+        </div>
+
+        <!-- Phone -->
+        <div class="mb-4">
+          <label for="phone" class="form-label fw-bold">Phone:</label>
+          <input type="text" class="form-control bg-secondary-subtle" id="phone" name="phone" value="<%= user.phone %>" >
+        </div>
+
+        <div class="mb-4">
+          <button type="submit" class="btn btn-save-changes w-100">Save Changes</button>
+        </div>
+      </form>
+
+      <hr>
+
+      <!-- Password Change Form -->
+      <form action="/change-password" method="POST" onsubmit="return validatePasswordForm()">
+        <h6 class="fw-bold mb-3">Change Password</h6>
+
+        <div id="passwordFormError" class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+          <label for="currentPassword" class="form-label">Current Password:</label>
+          <input type="password" class="form-control bg-secondary-subtle" id="currentPassword" name="currentPassword" >
+        </div>
+
+        <div class="mb-3">
+          <label for="newPassword" class="form-label">New Password:</label>
+          <input type="password" class="form-control bg-secondary-subtle" id="newPassword" name="newPassword" >
+        </div>
+
+        <div class="mb-3">
+          <label for="confirmPassword" class="form-label">Confirm Password:</label>
+          <input type="password" class="form-control bg-secondary-subtle" id="confirmPassword" name="confirmPassword" >
+        </div>
+
+        <div class="mb-4">
+          <a href="/forgot-password-logout" class="text-decoration-none">Forgot Password?</a>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Submit</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- SweetAlert CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+
+
+  function previewImage(event) {
+    const input = event.target;
+    const preview = document.getElementById("profilePreview");
+    const errorDiv = document.getElementById("profileFormError");
+    errorDiv.textContent = "";
+
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const validImageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+      if (!validImageTypes.includes(file.type)) {
+        errorDiv.textContent = "Please select a valid image file (jpg, png, webp, gif)";
+        input.value = ""; // Reset the file input
+        preview.src = "<%= user.profilePicture ? user.profilePicture : '/images/default-user.png' %>"; // reset preview
+        return;
+      }
+
+      // ✅ Valid image
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        preview.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function validateProfileForm() {
+    const name = document.getElementById("name").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const errorDiv = document.getElementById("profileFormError");
+
+    errorDiv.textContent = "";
+
+    if (!name || name.length < 2) {
+      errorDiv.textContent = "Please enter a valid name (at least 2 characters).";
+      return false;
+    }
+
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(phone)) {
+      errorDiv.textContent = "Please enter a valid 10-digit phone number.";
+      return false;
+    }
+
+    return true;
+  }
+
+  function validatePasswordForm() {
+    const currentPassword = document.getElementById("currentPassword").value.trim();
+    const newPassword = document.getElementById("newPassword").value.trim();
+    const confirmPassword = document.getElementById("confirmPassword").value.trim();
+    const errorDiv = document.getElementById("passwordFormError");
+
+    errorDiv.textContent = "";
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      errorDiv.textContent = "All fields are required.";
+      return false;
+    }
+
+    if (newPassword.length < 8) {
+      errorDiv.textContent = "New password must be at least 8 characters.";
+      return false;
+    }
+
+    if (newPassword !== confirmPassword) {
+      errorDiv.textContent = "New password and confirm password do not match.";
+      return false;
+    }
+
+    return true;
+  }
+
+
+</script>
+
+
+<% if (typeof success !== 'undefined') { %>
+  <script>
+    Swal.fire({
+      icon: 'success',
+      title: 'Success',
+      text: '<%= success %>',
+      confirmButtonColor: '#28a745'
+    });
+  </script>
+<% } %>
+
+<% if (typeof error !== 'undefined') { %>
+  <script>
+    Swal.fire({
+      icon: 'error',
+      title: 'Incorrect Password',
+      text: '<%= error %>',
+      confirmButtonColor: '#d33'
+    });
+  </script>
+<% } %>
+
+
+<%- include("../../views/partials/user/footer") %>

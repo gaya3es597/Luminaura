@@ -1,0 +1,264 @@
+<%- include("../../views/partials/admin/header") %>
+
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.css">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    #preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .preview-img {
+      height: 100px;
+      width: 100px;
+      object-fit: cover;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .image-cropper {
+      max-width: 100%;
+      margin-top: 20px;
+    }
+    #cropModal img {
+      max-width: 100%;
+    }
+  </style>
+</head>
+
+<div class="container my-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-white">
+      <h4 class="mb-0">Upload Products</h4>
+    </div>
+    <div class="card-body">
+      <form id="productForm" action="/admin/addProducts" method="POST" enctype="multipart/form-data" onsubmit="event.preventDefault(); validateForm();">
+
+        <div class="mb-3">
+          <label for="productName" class="form-label">Product Name</label>
+          <input type="text" class="form-control" id="productName" name="productName" >
+        </div>
+
+        <div class="mb-3">
+          <label for="description" class="form-label">Description</label>
+          <textarea class="form-control" id="description" name="description" rows="3" ></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Images</label>
+          <div class="border rounded d-flex align-items-center justify-content-center" style="height: 150px; position: relative;">
+            <label for="images" class="w-100 h-100 m-0 d-flex align-items-center justify-content-center" style="cursor: pointer;">
+              <i class="fa fa-cloud-upload-alt fa-2x text-muted"></i>
+            </label>
+            <input type="file" class="d-none" id="images" name="images" multiple accept="image/*">
+          </div>
+          <div id="preview"></div>
+        </div>
+
+        <div class="row">
+          <div class="mb-3 col-md-6">
+            <label for="category" class="form-label">Category</label>
+            <select class="form-select" id="category" name="category" >
+              <option selected disabled value="">Select Category</option>
+              <% categories.forEach(function(category) { %>
+                <option value="<%= category.categoryName %>"><%= category.categoryName %></option>
+              <% }) %>
+            </select>
+          </div>
+
+         
+
+        <div class="row">
+          <div class="mb-3 col-md-4">
+            <label for="price" class="form-label">Price</label>
+            <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" >
+          </div>
+
+          <div class="mb-3 col-md-4">
+            <label for="discount" class="form-label">Discount (%)</label>
+            <input type="number" class="form-control" id="discount" name="discount" min="0" max="100" step="0.01">
+          </div>
+
+          <div class="mb-3 col-md-4">
+            <label for="stock" class="form-label">Stock</label>
+            <input type="number" class="form-control" id="stock" name="stock" min="0" >
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="mb-3 col-md-6">
+            <label for="quantity" class="form-label">Quantity</label>
+            <input type="number" class="form-control" id="quantity" name="quantity" min="1" placeholder="e.g., 100">
+          </div>
+        
+          <div class="mb-3 col-md-6">
+            <label for="unit" class="form-label">Unit</label>
+            <select class="form-select" id="unit" name="unit" required>
+              <option selected disabled value="">Select Unit</option>
+              <option value="g">Gram (g)</option>
+              <option value="kg">Kilogram (kg)</option>
+              <option value="ml">Millilitre (ml)</option>
+              <option value="litre">Litre</option>
+              <option value="pcs">Pieces</option>
+              <option value="pack">Packet</option>
+            </select>
+          </div>
+        </div>
+      
+
+        <div class="d-grid">
+          <button type="submit" class="btn custom-pink-btn">Publish</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for cropping -->
+<div class="modal fade" id="cropModal" tabindex="-1" aria-labelledby="cropModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Crop Image</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="cropImage" src="" style="max-width: 100%;" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="startCropBtn" class="btn btn-secondary">Enable Crop Tool</button>
+        <button type="button" id="cropBtn" class="btn btn-primary">Crop & Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
+<script>
+  let cropper;
+  let selectedFiles = [];
+  let croppedBlobs = [];
+
+  const input = document.getElementById("images");
+  const preview = document.getElementById("preview");
+  const cropImage = document.getElementById("cropImage");
+  const cropModal = new bootstrap.Modal(document.getElementById("cropModal"));
+
+  input.addEventListener("change", (e) => {
+    selectedFiles = Array.from(e.target.files);
+    handleImageCrop(selectedFiles.shift()); // Start cropping
+  });
+
+  function handleImageCrop(file) {
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      cropImage.src = reader.result;
+      cropper?.destroy();
+      cropper = null;
+      cropModal.show();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  document.getElementById("startCropBtn").addEventListener("click", () => {
+    if (cropper) cropper.destroy();
+
+    cropper = new Cropper(cropImage, {
+      aspectRatio: 1,
+      viewMode: 1,
+      responsive: true,
+      autoCropArea: 0.5
+    });
+  });
+
+  document.getElementById("cropBtn").addEventListener("click", () => {
+    if (!cropper) {
+      alert("Please enable the crop tool first.");
+      return;
+    }
+
+    cropper.getCroppedCanvas().toBlob(blob => {
+      croppedBlobs.push(blob);
+
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(blob);
+      img.className = "preview-img";
+      preview.appendChild(img);
+
+      cropper.destroy();
+      cropper = null;
+      cropModal.hide();
+
+      handleImageCrop(selectedFiles.shift());
+    });
+  });
+
+  function validateForm() {
+
+    const form = document.getElementById("productForm");
+    const requiredFields = ["productName", "description", "category", "price", "stock"];
+    let valid = true;
+
+    requiredFields.forEach(id => {
+      const field = document.getElementById(id);
+      if (!field.value || field.value === "") {
+        field.classList.add("is-invalid");
+        valid = false;
+      } else {
+        field.classList.remove("is-invalid");
+      }
+    });
+
+    if (!valid) {
+      Swal.fire("Error", "Please fill out all required fields.", "error");
+      return;
+    }
+
+    if (croppedBlobs.length === 0) {
+      Swal.fire("Error", "Please upload and crop at least one image.", "error");
+      return;
+    }
+
+    prepareCroppedImages();
+  }
+
+  function prepareCroppedImages() {
+    const form = document.getElementById("productForm");
+    const formData = new FormData(form);
+
+    croppedBlobs.forEach((blob, i) => {
+      formData.append("images", blob, `image-${Date.now()}-${i}.png`);
+    });
+
+    fetch(form.action, {
+      method: "POST",
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        Swal.fire({
+          title: "Success",
+          text: data.message || "Product added successfully!",
+          icon: "success",
+        }).then(() => {
+          window.location.href = "/admin/addProducts"; 
+        });
+      } else {
+        Swal.fire("Error", data.message || "Something went wrong.", "error");
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      Swal.fire("Error", "Upload failed. Please try again.", "error");
+    });
+  }
+</script>

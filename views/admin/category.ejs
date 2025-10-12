@@ -1,0 +1,319 @@
+<%- include("../../views/partials/admin/header") %>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Custom CSS to allow 5 cards per row -->
+<style>
+  @media (min-width: 768px) {
+    .col-custom-5 {
+      width: 20%;
+      flex: 0 0 auto;
+    }
+  }
+</style>
+
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>Category</h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+      Add category
+    </button>
+  </div>
+
+  <!-- Search Form -->
+  <form class="mb-4" method="GET" action="/admin/category">
+    <div class="input-group">
+      <input type="text" class="form-control" id="searchInput" name="search" placeholder="Search category..."
+        value="<%= typeof search !== 'undefined' ? search : '' %>">
+      
+      <!-- Search Button -->
+      <button class="btn btn-outline-secondary" type="submit">Search</button>
+      
+      <!-- Clear Button with redirect -->
+      <a href="/admin/category" class="btn btn-outline-danger">Clear</a>
+    </div>
+    
+  </form>
+
+
+
+<!-- Category Table -->
+<div class="table-responsive">
+  <table class="table table-bordered align-middle text-center">
+    <thead class="table-light">
+      <tr>
+        <th>Image</th>
+        <th>Name</th>
+        <th>Offer (%)</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% categories.forEach(category => { %>
+        <tr>
+          <td>
+            <img src="<%= category.categoryImage %>" alt="Category Image" style="height: 80px; object-fit: cover; border-radius: 6px;">
+          </td>
+          <td><%= category.categoryName %></td>
+          <td><%= category.categoryOffer || 0 %>%</td>
+          <td>
+            <% if (category.isListed) { %>
+              <span class="badge bg-success">Active</span>
+            <% } else { %>
+              <span class="badge bg-danger">Inactive</span>
+            <% } %>
+          </td>
+          <td>
+            <div class="d-flex justify-content-center align-items-center gap-2">
+
+                <button class="btn btn-success btn-sm"
+                data-product="<%= encodeURIComponent(JSON.stringify(category)) %>"
+                onclick="openEditModalFromButton(this)">Edit</button>  
+          
+              <button class="btn btn-danger btn-sm"
+                onclick="confirmDelete('<%= category._id %>')">Delete</button>
+          
+              <form id="toggleForm-<%= category._id %>" action="/admin/category-list/<%= category._id %>" method="POST"
+                onsubmit="handleToggleSubmit(event)">
+                <button type="submit" class="btn btn-sm <%= category.isListed ? 'btn-warning' : 'btn-info' %>">
+                  <%= category.isListed ? 'Unlist' : 'List' %>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+
+
+  <!-- Pagination -->
+  <div class="d-flex justify-content-center mt-4">
+    <nav>
+      <ul class="pagination">
+        <% for (let i = 1; i <= totalPages; i++) { %>
+          <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+            <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+          </li>
+        <% } %>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+
+
+<!-- Add/Edit Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="categoryForm" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="categoryId" id="categoryId">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addCategoryModalLabel">Add Category</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="categoryName" class="form-label">Name</label>
+            <div id="nameError" class="text-danger mt-1"></div>
+            <input type="text" class="form-control" id="categoryName" name="categoryName">
+          </div>
+
+          <!-- Offer Field -->
+          <div class="mb-3">
+            <label for="categoryOffer" class="form-label">Offer (%)</label>
+            <div id="offerError" class="text-danger mt-1"></div>
+            <input type="number" min="0" max="100" class="form-control" id="categoryOffer" name="offer" placeholder="Enter offer percentage">
+          </div>
+
+          <div class="mb-3">
+            <label for="categoryImage" class="form-label">Image</label>
+            <div id="imageError" class="text-danger mt-1"></div>
+            <input class="form-control" type="file" id="categoryImage" name="image" accept="image/*">
+            <input type="hidden" name="image" id="existingImage">
+            <div class="mb-3" id="existingImageContainer" style="display: none;">
+              <label class="form-label">Current Image</label><br>
+              <img id="existingImagePreview" src="" alt="Current Image"
+                style="height: 120px; object-fit: cover; border: 1px solid #ddd; padding: 4px; border-radius: 6px;">
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Script for Add/Edit Modal and SweetAlert -->
+<script>
+  const categoryModal = new bootstrap.Modal(document.getElementById('addCategoryModal'));
+
+  function openEditModalFromButton(button) {
+        const category = JSON.parse(decodeURIComponent(button.dataset.product));
+        openEditModal(category);
+    }
+
+  function openEditModal(category) {
+    document.getElementById('addCategoryModalLabel').innerText = "Edit Category";
+    document.getElementById('categoryForm').action = `/admin/category-edit/${category._id}`;
+    document.getElementById('categoryName').value = category.categoryName;
+    document.getElementById('categoryOffer').value = category.categoryOffer;
+    document.getElementById('categoryId').value = category._id;
+
+    document.getElementById('existingImage').value = category.categoryImage;
+
+    const imageContainer = document.getElementById('existingImageContainer');
+    const imagePreview = document.getElementById('existingImagePreview');
+    
+    if (category.categoryImage) {
+      imagePreview.src = category.categoryImage;
+      imageContainer.style.display = 'block';
+    } else {
+      imageContainer.style.display = 'none';
+    }
+    categoryModal.show();
+  }
+
+  document.querySelector('[data-bs-target="#addCategoryModal"]').addEventListener('click', () => {
+    document.getElementById('addCategoryModalLabel').innerText = "Add Category";
+    document.getElementById('categoryForm').action = "/admin/addCategory";
+    document.getElementById('categoryForm').reset();
+    document.getElementById('categoryId').value = "";
+    document.getElementById('existingImageContainer').style.display = 'none';
+  });
+
+  document.getElementById('categoryForm').addEventListener('submit', function (e) {
+    const nameInput = document.getElementById('categoryName');
+    const imageInput = document.getElementById('categoryImage');
+    const nameError = document.getElementById('nameError');
+    const imageError = document.getElementById('imageError');
+    const isEdit = !!document.getElementById('categoryId').value;
+
+    nameError.textContent = "";
+    imageError.textContent = "";
+
+    let isValid = true;
+
+    if (!nameInput.value.trim()) {
+      nameError.textContent = "Category name is required.";
+      isValid = false;
+    }
+
+    if (!isEdit && !imageInput.value) {
+      imageError.textContent = "Category image is required.";
+      isValid = false;
+    }
+
+    if (imageInput.files.length > 0) {
+      const file = imageInput.files[0];
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+      if (!allowedTypes.includes(file.type)) {
+        imageError.textContent = "Only JPEG, PNG, or WEBP images are allowed.";
+        isValid = false;
+      }
+    }
+
+    if (!isValid) {
+      e.preventDefault();
+      return;
+    }
+
+    e.preventDefault(); // handle manually with fetch
+    const formData = new FormData(this);
+    const url = this.action;
+
+    fetch(url, {
+      method: 'POST',
+      body: formData
+    }).then(res => res.json())
+      .then(data => {
+        if (data.success) {
+  categoryModal.hide();
+  Swal.fire({
+    icon: 'success',
+    title: data.success,
+    showConfirmButton: false,
+    timer: 1500
+  }).then(() => {
+    location.reload();
+  });
+} else if (data.message) {
+  Swal.fire({
+    icon: 'error',
+    title: 'Error',
+    text: data.message
+  });
+  }}
+).catch(() => {
+        Swal.fire("Error", "Something went wrong", "error");
+      });
+  });
+
+  function handleToggleSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    fetch(form.action, {
+      method: 'POST'
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: data.success,
+            showConfirmButton: false,
+            timer: 1500
+          }).then(() => {
+            location.reload();
+          });
+        }
+      })
+      .catch(() => {
+        Swal.fire("Error", "Unable to update status", "error");
+      });
+  }
+
+  function confirmDelete(categoryId) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        fetch(`/admin/category-delete/${categoryId}`, {
+          method: 'POST'
+        }).then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire({
+                icon: 'success',
+                title: data.success,
+                showConfirmButton: false,
+                timer: 1500
+              }).then(() => location.reload());
+            }
+          }).catch(() => {
+            Swal.fire("Error", "Unable to delete", "error");
+          });
+      }
+    });
+  }
+</script>

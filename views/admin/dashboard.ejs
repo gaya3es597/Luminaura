@@ -1,0 +1,111 @@
+<%- include("../../views/partials/admin/header") %>
+
+<!-- Dashboard Content -->
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">Dashboard</h3>
+        <div class="d-flex gap-2">
+          <a href="/admin/sales" class="btn btn-primary">
+            <i class="fa fa-file-invoice-dollar"></i> View Sales Report
+          </a>
+          <!-- <a href="/admin/ledger" class="btn btn-secondary">
+            <i class="fa fa-book"></i> Ledger Book
+          </a> -->
+        </div>
+      </div>
+      
+  Top 10 Products
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Top 10 Best Selling Products</h5>
+    </div>
+    <div class="card-body">
+      <table class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Product Name</th>
+            <th>Total Sold</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% topProducts.forEach((product, index) => { %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td><%= product.productName %></td>
+              <td><%= product.totalQuantity %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  Top 10 Categories 
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Top 10 Best Selling Categories</h5>
+    </div>
+    <div class="card-body">
+      <table class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Category Name</th>
+            <th>Total Sold</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% topCategories.forEach((category, index) => { %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td><%= category.categoryName %></td>
+              <td><%= category.totalQuantity %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const ctx = document.getElementById('salesChart').getContext('2d');
+  let salesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: <%- JSON.stringify(salesChartLabels) %>,
+      datasets: [{
+        label: 'Total Sales',
+        data: <%- JSON.stringify(salesChartData) %>,
+        borderColor: 'rgba(75, 192, 192, 1)',
+        fill: true,
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top'
+        }
+      }
+    }
+  });
+
+  // Filter change event
+  document.getElementById('salesFilter').addEventListener('change', function() {
+    const filter = this.value;
+    window.location.href = `/admin/dashboard?filter=${filter}`;
+  });
+</script>
+
+</div>
+</div> <!-- closes main-content and admin-wrapper -->
+</body>
+</html>

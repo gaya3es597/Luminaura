@@ -1,0 +1,415 @@
+<%- include("../../views/partials/user/header") %>
+
+    <style>
+        .account-page {
+            display: flex;
+            gap: 40px;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #3a2b3c;
+            color: white;
+            border-radius: 8px;
+            padding: 20px;
+            height: calc(100vh - 150px);
+            position: sticky;
+            top: 80px;
+            flex-shrink: 0;
+        }
+
+        .sidebar h5 {
+            margin-bottom: 30px;
+        }
+
+        .sidebar ul li {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            transition: background 0.2s ease;
+        }
+
+        .sidebar ul li:hover {
+            background-color: #2a2a2a;
+        }
+
+        .sidebar ul li.active {
+            background-color: #2c2c2c;
+            font-weight: bold;
+        }
+
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            display: block;
+        }
+
+        .sidebar ul li i {
+            margin-right: 10px;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .address-card {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .address-card .actions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+
+        .address-card h6 {
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .address-card p {
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .btn-outline-secondary {
+            margin-left: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .account-page {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                position: static;
+                height: auto;
+                border-radius: 0;
+            }
+
+            .main-content {
+                max-height: none;
+                overflow: visible;
+            }
+        }
+    </style>
+
+
+
+    <div class="container my-5">
+        <div class="account-page d-flex gap-4">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <h5 class="fw-bold">My Account</h5>
+                <ul class="list-unstyled">
+                    <li class="<%= currentPage === 'profile' ? 'active' : '' %>">
+                        <a href="/userProfile"><i class="fa-regular fa-user"></i>
+                            <%= user.name %>
+                        </a>
+                    </li>
+                    <li class="<%= currentPage === 'address' ? 'active' : '' %>">
+                        <a href="/userAddress"><i class="fa-solid fa-location-dot"></i> Address</a>
+                    </li>
+                    <li class="<%= currentPage === 'orders' ? 'active' : '' %>">
+                        <a href="/orders"><i class="fa-solid fa-receipt"></i> Orders</a>
+                    </li>
+                    <li class="<%= currentPage === 'wishlist' ? 'active' : '' %>">
+                        <a href="/wishlist"><i class="fa-regular fa-heart"></i> Wishlist</a>
+                    </li>
+                    <li class="<%= currentPage === 'coupons' ? 'active' : '' %>">
+                        <a href="/coupons"><i class="fa-solid fa-gift"></i> Coupons</a>
+                    </li>
+                    <li class="<%= currentPage === 'wallet' ? 'active' : '' %>">
+                        <a href="/wallet"><i class="fa-regular fa-credit-card"></i> Wallet</a>
+                    </li>
+                    <li>
+                        <a href="/logout"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content shadow-sm w-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold">My Addresses</h5>
+                    <button class="btn btn-primary" onclick="openAddressForm()">Add Address</button>
+                </div>
+
+                <!-- Loop Addresses -->
+                <% if (userAddress && userAddress.address && userAddress.address.length> 0) { %>
+                    <% userAddress.address.forEach((address, index)=> { %>
+                        <div class="address-card">
+                            <div class="actions">
+                                <button class="btn btn-sm btn-outline-primary"
+                                    onclick="editAddress('<%= index %>')">Edit</button>
+                                <button class="btn btn-sm btn-outline-danger"
+                                    onclick="deleteAddress('<%= address._id %>')">Delete</button>
+                            </div>
+                            <h6>
+                                <%= address.name %> - <%= address.phone %>
+                            </h6>
+                            <p>
+                                <%= address.streetAddress %>, <%= address.town %>, <%= address.city %>, <%=
+                                                address.state %>
+                            </p>
+                            <p>
+                                <%= address.pincode %>, <%= address.country %>
+                            </p>
+                        </div>
+                        <% }); %>
+                            <% } else { %>
+                                <p class="text-muted">No address found. Add your first address.</p>
+                                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Address Modal (hidden initially) -->
+    <div class="modal fade" id="addressModal" tabindex="-1" aria-labelledby="addressModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form class="modal-content" id="addressForm" action="/addAddress" method="POST">
+                <input type="hidden" name="addressId" id="addressId" />
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addressModalLabel">Add / Edit Address</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="text-danger small" id="error-name"></div><input class="form-control" type="text"
+                            name="name" id="name" placeholder="Full Name" />
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-danger small" id="error-phone"></div><input class="form-control" type="text"
+                            name="phone" id="phone" placeholder="Phone Number" />
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-danger small" id="error-street"></div><input class="form-control" type="text"
+                            name="streetAddress" id="street" placeholder="Street Address" />
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-danger small" id="error-town"></div><input class="form-control" type="text"
+                            name="town" id="town" placeholder="Town" />
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-danger small" id="error-city"></div><input class="form-control" type="text"
+                            name="city" id="city" placeholder="City" />
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-danger small" id="error-state"></div><input class="form-control" type="text"
+                            name="state" id="state" placeholder="State" />
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-danger small" id="error-pincode"></div><input class="form-control" type="text"
+                            name="pincode" id="pincode" placeholder="Pincode" />
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-danger small" id="error-country"></div><input class="form-control" type="text"
+                            name="country" id="country" placeholder="Country" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save Address</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Bootstrap Modal-->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+    <script>
+        const addressId = document.getElementById('addressId');
+
+        const userAddresses = <%- JSON.stringify((userAddress && userAddress.address) || []) %>;
+
+        const addressModal = new bootstrap.Modal(document.getElementById('addressModal'));
+
+        function openAddressForm() {
+          // alert("Opening address form!");
+            document.getElementById('addressForm').reset();
+            document.getElementById('addressId').value = '';
+            addressModal.show();
+        }
+
+
+        function editAddress(index) {
+            const address = userAddresses[index];
+            console.log(address);
+            document.getElementById('addressId').value = address._id;
+            document.getElementById('name').value = address.name;
+            document.getElementById('phone').value = address.phone;
+            document.getElementById('street').value = address.streetAddress;
+            document.getElementById('town').value = address.town;
+            document.getElementById('city').value = address.city;
+            document.getElementById('state').value = address.state;
+            document.getElementById('pincode').value = address.pincode;
+            document.getElementById('country').value = address.country;
+
+            addressModal.show();
+        }
+
+        document.getElementById('addressForm').addEventListener('submit', function (e) {
+
+
+            let isValid = true;
+
+            // Clear all previous errors
+            const fields = ['name', 'phone', 'street', 'town', 'city', 'state', 'pincode', 'country'];
+            fields.forEach(field => {
+                document.getElementById(`error-${field}`).textContent = '';
+            });
+
+            // Validate each field
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const streetAddress = document.getElementById('street').value.trim();
+            const town = document.getElementById('town').value.trim();
+            const city = document.getElementById('city').value.trim();
+            const state = document.getElementById('state').value.trim();
+            const pincode = document.getElementById('pincode').value.trim();
+            const country = document.getElementById('country').value.trim();
+
+            if (name === '') {
+                document.getElementById('error-name').textContent = 'Name is required.';
+                isValid = false;
+            }
+
+            if (!/^\d{10}$/.test(phone)) {
+                document.getElementById('error-phone').textContent = 'Enter a valid 10-digit phone number.';
+                isValid = false;
+            }
+
+            if (streetAddress === '') {
+                document.getElementById('error-street').textContent = 'Street address is required.';
+                isValid = false;
+            }
+
+            if (town === '') {
+                document.getElementById('error-town').textContent = 'Town is required.';
+                isValid = false;
+            }
+
+            if (city === '') {
+                document.getElementById('error-city').textContent = 'City is required.';
+                isValid = false;
+            }
+
+            if (state === '') {
+                document.getElementById('error-state').textContent = 'State is required.';
+                isValid = false;
+            }
+
+            if (!/^\d{6}$/.test(pincode)) {
+                document.getElementById('error-pincode').textContent = 'Enter a valid 6-digit pincode.';
+                isValid = false;
+            }
+
+            if (country === '') {
+                document.getElementById('error-country').textContent = 'Country is required.';
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                return;
+            }
+
+            // Valid, proceed with fetch submission
+
+            e.preventDefault()
+
+
+            const formData = {
+                name,
+                phone,
+                streetAddress,
+                town,
+                city,
+                state,
+                pincode,
+                country
+            };
+
+            if(addressId){
+                formData.addressId = addressId.value
+            }
+
+            const endpoint = addressId.value ? '/editAddress' : '/addAddress';
+
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            }).then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: data.message,
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                addressModal.hide();
+                                window.location.reload();
+                            }
+                        });
+                    } else {
+                        Swal.fire('Error', data.message || 'Failed to save address.', 'error');
+                    }
+                })
+                .catch(() => {
+                    Swal.fire('Error', 'Something went wrong.', 'error');
+                });
+
+        });
+
+
+
+
+        function deleteAddress(id) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'Do you really want to delete this address?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/address-delete/${id}`, {
+                        method: 'POST',
+                    })
+                        .then((res) => {
+                            if (res.ok) {
+                                window.location.reload();
+                            } else {
+                                Swal.fire('Error', 'Failed to delete address.', 'error');
+                            }
+                        })
+                        .catch(() => {
+                            Swal.fire('Error', 'Something went wrong.', 'error');
+                        });
+                }
+            });
+        }
+    </script>
+
+    <%- include("../../views/partials/user/footer") %>

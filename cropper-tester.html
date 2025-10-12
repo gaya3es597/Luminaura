@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cropper Test</title>
+  <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet"/>
+  <style>
+    #image {
+      max-width: 100%;
+      display: block;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <input type="file" id="input" accept="image/*" />
+  <br />
+  <img id="image" style="display:none" />
+  <br />
+  <button id="cropBtn" style="display:none">Crop</button>
+  <br />
+  <canvas id="canvas" style="border:1px solid #ccc; display:none;"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
+  <script>
+    const input = document.getElementById('input');
+    const image = document.getElementById('image');
+    const cropBtn = document.getElementById('cropBtn');
+    const canvas = document.getElementById('canvas');
+    let cropper;
+
+    input.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const url = URL.createObjectURL(file);
+      image.src = url;
+      image.style.display = 'block';
+
+      if (cropper) {
+        cropper.destroy();
+      }
+
+      cropper = new Cropper(image, {
+        aspectRatio: 1,
+        viewMode: 1,
+        autoCropArea: 1,
+        background: false,
+        zoomable: true,
+      });
+
+      cropBtn.style.display = 'inline-block';
+      canvas.style.display = 'none';
+    });
+
+    cropBtn.addEventListener('click', () => {
+      if (!cropper) return;
+      const croppedCanvas = cropper.getCroppedCanvas();
+      canvas.width = croppedCanvas.width;
+      canvas.height = croppedCanvas.height;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(croppedCanvas, 0, 0);
+      canvas.style.display = 'block';
+    });
+  </script>
+</body>
+</html>

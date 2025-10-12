@@ -1,0 +1,221 @@
+<%- include("../../views/partials/admin/header") %>
+
+<style>
+  .content-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .search-form {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.search-form .form-control {
+  border-radius: 20px 0 0 20px;
+}
+
+.search-form .search-btn {
+  color: white;
+  border-radius: 0;
+}
+
+.search-form .clear-btn {
+  background-color: red;
+  color: white;
+  border-radius: 0 20px 20px 0;
+  text-decoration: none;
+}
+
+  .table th, .table td {
+    vertical-align: middle;
+  }
+
+  .table thead {
+    background-color: #343a40;
+    color: white;
+  }
+
+  .table-striped tbody tr:nth-of-type(odd) {
+    background-color: #f9f9f9;
+  }
+
+  .btn-sm {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    border-radius: 20px;
+  }
+
+  .btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+  }
+
+  .btn-success {
+    background-color: #198754;
+    border-color: #198754;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .pagination {
+  margin-top: 20px;
+}
+
+.pagination .page-item {
+  margin: 0 4px;
+}
+
+.pagination .page-link {
+  color: #343a40;
+  border: 1px solid #dee2e6;
+  padding: 6px 12px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.pagination .page-link:hover {
+  background-color: orange;
+  color: #fff;
+  border-color: orange;
+}
+/* #ff6a00 */
+.pagination .page-item.active .page-link {
+  background-color: orange;
+  border-color: orange;
+  color: white;
+  font-weight: bold;
+}
+
+  @media (max-width: 768px) {
+    .content-title {
+      font-size: 1.25rem;
+      text-align: center;
+    }
+    .table thead {
+      display: none;
+    }
+    .table tbody td {
+      display: block;
+      text-align: right;
+      position: relative;
+      padding-left: 50%;
+    }
+    .table tbody td::before {
+      content: attr(data-label);
+      position: absolute;
+      left: 1rem;
+      width: 45%;
+      white-space: nowrap;
+      font-weight: bold;
+      text-align: left;
+    }
+    .table tbody tr {
+      display: block;
+      margin-bottom: 1rem;
+    }
+  }
+</style>
+
+<div class="main-content px-4 py-4">
+  <div class="content-header row mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2 class="content-title card-title">Customers</h2>
+    </div>
+  </div>
+
+  <header class="card-header text-center mb-4">
+    <form action="/admin/users" method="get" class="search-form d-flex">
+      <input type="text" class="form-control" placeholder="Search customers..." name="search">
+      
+    <!-- Search Button -->
+    <button class="btn btn-outline-secondary" type="submit">Search</button>
+      
+    <!-- Clear Button with redirect -->
+    <a href="/admin/users" class="btn btn-outline-danger">Clear</a>
+    </form>
+  </header>
+
+  <div class="right mt-4 table-container">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th scope="col"><b>Name</b></th>
+          <th scope="col"><b>Email</b></th>
+          <th scope="col"><b>Phone No</b></th>
+          <th scope="col"><b>Action</b></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (data.length === 0) { %>
+          <tr>
+            <td colspan="4" class="text-center text-muted">No customers found.</td>
+          </tr>
+        <% } else { %>
+          <% data.forEach(user => { %>
+            <tr>
+              <td data-label="Name"><%= user.name %></td>
+              <td data-label="Email"><%= user.email %></td>
+              <td data-label="Phone No"><%= user.phone %></td>
+              <td data-label="Action">
+                <% if (!user.isBlocked) { %>
+                  <a href="/admin/blockCustomer?id=<%= user._id %>" onclick="confirmBlock(event,'<%= user._id%>')" class="btn btn-danger btn-sm">Block</a>
+                <% } else { %>
+                  <a href="/admin/unblockCustomer?id=<%= user._id %>" onclick="confirmUnblock(event,'<%= user._id%>')" class="btn btn-success btn-sm">Unblock</a>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="container mt-3">
+    <nav aria-label="Page navigation">
+      <ul class="pagination justify-content-center">
+        <%for(let i=1;i<=totalPages;i++){%>
+          <li class="page-item <%= (i === currentPage) ? 'active' : '' %>">
+              <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+          </li>
+            <%}%>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmBlock(event, userId){
+      event.preventDefault();
+      Swal.fire({
+        title:'Are you sure?',
+        text:'You are about to block this user!',
+        icon:'warning',
+        showCancelButton: true,
+        confirmButtonText:'Yes, Block!'
+      }).then((result)=>{
+        if(result.isConfirmed){
+          window.location.href = '/admin/blockCustomer?id='+ userId;
+        }
+      })
+    }
+
+    function confirmUnblock(event, userId){
+      event.preventDefault();
+      Swal.fire({
+        title:'Are you sure?',
+        text:'You are about to unblock this user!',
+        icon:'info',
+        showCancelButton: true,
+        confirmButtonText:'Yes, Unblock!'
+      }).then((result)=>{
+        if(result.isConfirmed){
+          window.location.href = '/admin/unblockCustomer?id='+ userId;
+        }
+      })
+    }
+</script>

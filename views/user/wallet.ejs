@@ -1,0 +1,420 @@
+<%- include("../../views/partials/user/header") %>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+        .account-page {
+            display: flex;
+            gap: 40px;
+        }
+
+        /* Sidebar (unchanged as requested) */
+        .sidebar {
+            width: 250px;
+            background-color: #3a2b3c;
+            color: white;
+            border-radius: 8px;
+            padding: 20px;
+            height: calc(100vh - 150px);
+            position: sticky;
+            top: 80px;
+            flex-shrink: 0;
+        }
+
+        .sidebar h5 {
+            margin-bottom: 30px;
+        }
+
+        .sidebar ul li {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            transition: background 0.2s ease;
+        }
+
+        .sidebar ul li:hover {
+            background-color: #2a2a2a;
+        }
+
+        .sidebar ul li.active {
+            background-color: #2c2c2c;
+            font-weight: bold;
+        }
+
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            display: block;
+        }
+
+        .sidebar ul li i {
+            margin-right: 10px;
+        }
+
+        /* Main Wallet Content Styling */
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .wallet-balance {
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            color: white;
+            border-radius: 16px;
+            padding: 30px 20px;
+            margin-bottom: 40px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 242, 254, 0.3);
+        }
+
+        .wallet-balance h5 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .wallet-balance h3 {
+            font-size: 36px;
+            font-weight: 700;
+        }
+
+        .transaction-history {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .transaction-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 6px solid;
+            padding: 20px;
+            border-radius: 12px;
+            background: #f9f9f9;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: background 0.2s;
+        }
+
+        .transaction-card.credit {
+            border-left-color: #28a745;
+        }
+
+        .transaction-card.debit {
+            border-left-color: #dc3545;
+        }
+
+        .transaction-card:hover {
+            background-color: #f0f0f0;
+        }
+
+        .transaction-info h6 {
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .transaction-info p {
+            margin-bottom: 4px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .transaction-info small {
+            color: #999;
+        }
+
+        .transaction-amount h6 {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .account-page {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                position: static;
+                height: auto;
+                border-radius: 0;
+            }
+
+            .main-content {
+                max-height: none;
+                overflow: visible;
+            }
+        }
+    </style>
+
+    <div class="container my-5">
+        <div class="account-page">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <h5 class="fw-bold">My Account</h5>
+                <ul class="list-unstyled">
+                    <li class="<%= currentPage === 'profile' ? 'active' : '' %>">
+                        <a href="/userProfile"><i class="fa-regular fa-user"></i>
+                            <%= user.name %>
+                        </a>
+                    </li>
+                    <li class="<%= currentPage === 'address' ? 'active' : '' %>">
+                        <a href="/userAddress"><i class="fa-solid fa-location-dot"></i> Address</a>
+                    </li>
+                    <li class="<%= currentPage === 'orders' ? 'active' : '' %>">
+                        <a href="/orders"><i class="fa-solid fa-receipt"></i> Orders</a>
+                    </li>
+                    <li class="<%= currentPage === 'wishlist' ? 'active' : '' %>">
+                        <a href="/wishlist"><i class="fa-regular fa-heart"></i> Wishlist</a>
+                    </li>
+                    <li class="<%= currentPage === 'coupons' ? 'active' : '' %>">
+                        <a href="/coupons"><i class="fa-solid fa-gift"></i> Coupons</a>
+                    </li>
+                    <li class="<%= currentPage === 'wallet' ? 'active' : '' %>">
+                        <a href="/wallet"><i class="fa-regular fa-credit-card"></i> Wallet</a>
+                    </li>
+                    <li>
+                        <a href="/logout"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Wallet Content -->
+            <div class="main-content">
+                <h4 class="fw-bold mb-4">My Wallet</h4>
+
+                <!-- Wallet Balance -->
+                <div class="wallet-balance">
+                    <h5>Available Balance</h5>
+                    <h3>₹<%= walletBalance.toFixed(2) || 0 %>
+                    </h3>
+                </div>
+
+                <!-- Add to Wallet Button -->
+                <div class="text-center mb-4">
+                    <button class="btn btn-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#addToWalletModal">
+                        <i class="fa-solid fa-plus"></i> Add to Wallet
+                    </button>
+                </div>
+
+
+                <!-- Transaction History -->
+                <h6 class="mb-3 fw-semibold">Transaction History</h6>
+                <div class="transaction-history">
+                    <% if (transactions && transactions.length> 0) { %>
+                        <% transactions.forEach(txn=> { %>
+                            <div class="transaction-card <%= txn.type %>">
+                                <div class="transaction-info">
+                                    <h6>
+                                        <%= txn.type==='credit' ? 'Credited' : 'Debited' %>
+                                    </h6>
+                                    <p>
+                                        <%= txn.description %>
+                                    </p>
+                                    <small>
+                                        <%= new Date(txn.date).toLocaleString() %>
+                                    </small>
+                                </div>
+                                <div class="transaction-amount text-end">
+                                    <h6 class="<%= txn.type === 'credit' ? 'text-success' : 'text-danger' %>">
+                                        <%= txn.type==='credit' ? '+' : '-' %>₹<%= txn.amount %>
+                                    </h6>
+                                </div>
+                            </div>
+                            <% }) %>
+                    <% } else { %>
+                        <p class="text-muted">You have no wallet transactions yet.</p>
+                        <% } %>
+                </div>
+
+                <!-- Pagination Controls -->
+<div class="d-flex justify-content-center mt-4">
+  <nav>
+    <ul class="pagination">
+      <% if (page > 1) { %>
+        <li class="page-item">
+          <a class="page-link" href="?page=<%= page - 1 %>">Previous</a>
+        </li>
+      <% } else { %>
+        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+      <% } %>
+
+      <% for (let i = 1; i <= totalPages; i++) { %>
+        <li class="page-item <%= i === page ? 'active' : '' %>">
+          <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+        </li>
+      <% } %>
+
+      <% if (page < totalPages) { %>
+        <li class="page-item">
+          <a class="page-link" href="?page=<%= page + 1 %>">Next</a>
+        </li>
+      <% } else { %>
+        <li class="page-item disabled"><span class="page-link">Next</span></li>
+      <% } %>
+    </ul>
+  </nav>
+</div>
+
+
+                <!-- Add to Wallet Modal -->
+                <div class="modal fade" id="addToWalletModal" tabindex="-1" aria-labelledby="addToWalletModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                    <form id="walletRechargeForm" class="modal-content">
+                        <div class="modal-header">
+                        <h5 class="modal-title" id="addToWalletModalLabel">Add Money to Wallet</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="walletAmount" class="form-label">Amount (in ₹)</label>
+                            <input type="number" min="1" class="form-control" id="amount" required>
+                        </div>
+                        </div>
+                        <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary" id="payButton">Proceed to Pay</button>
+                        </div>
+                    </form>
+                    </div>
+                </div>
+  
+            </div>
+        </div>
+    </div>
+
+    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script> -->
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+    document.getElementById('walletRechargeForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const amountInput = document.getElementById('amount');
+        const amount = amountInput.value;
+
+        if (!amount || amount < 1) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Amount',
+                text: 'Please enter a valid amount greater than ₹1.'
+            });
+            return;
+        }
+
+        try {
+            const response = await fetch('/wallet/create-razorpay-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ amount })
+            });
+
+            const data = await response.json();
+
+       
+
+            if (!data.success) {
+                throw new Error(data.message || 'Something went wrong');
+            }
+
+            const options = {
+                key: data.key_id,
+                amount: data.amount,
+                currency: "INR",
+                name: "Wallet Recharge",
+                image: "/img/pc-logo.png",
+                description: "Add money to wallet",
+                order_id: data.order_id,
+                handler: async function (response) {
+                    try {
+                        const verifyResponse = await fetch('/wallet/verify-payment', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(response)
+                        });
+
+                        const verifyData = await verifyResponse.json();
+
+                        if (verifyData.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Payment Successful',
+                                text: 'Your wallet has been updated.',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Verification Failed',
+                                text: 'Please contact support.'
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Verification Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Payment verification failed. Please try again or contact support.'
+                        });
+                    }
+                },
+                prefill: {
+                    name: "<%= user.name %>",
+                    email: "<%= user.email %>"
+                },
+                theme: {
+                    color: "#4a5568"
+                }
+            };
+
+            const rzp = new Razorpay(options);
+
+            // Handle payment failure
+            rzp.on('payment.failed', function (response) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Payment Failed',
+                    text:'Transaction failed. Please try again.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Retry',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Retry payment
+                        rzp.open();
+                    } else {
+                        // Optionally handle cancel logic
+                        console.log("User cancelled retry");
+                    }
+                });
+            });
+
+            rzp.open();
+
+            // Hide the modal after opening Razorpay
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addToWalletModal'));
+            modal.hide();
+
+        } catch (error) {
+            console.error('Order Creation Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'Something went wrong while processing your payment.'
+            });
+        }
+    });
+</script>
+
+
+    <%- include("../../views/partials/user/footer") %>

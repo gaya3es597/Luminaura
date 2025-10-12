@@ -1,0 +1,197 @@
+<%- include("../../views/partials/admin/header") %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login</title>
+  <link rel="stylesheet" href="/styles/register.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  
+
+
+  <!-- Bootstrap CSS for toast -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    .error-message {
+      color: red;
+      font-size: 0.9rem;
+      
+      margin-bottom: 5px;
+    }
+ .form-container {
+  max-width: 420px;
+  width: 100%;
+  margin: 60px auto;
+  background: #ffffff;
+  padding: 40px 30px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.login-heading {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 25px;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.3s ease;
+  background-color: #f9f9f9;
+}
+
+input[type="email"]:focus,
+input[type="password"]:focus {
+  border-color: #007bff;
+  background-color: #fff;
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.password-wrapper i {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #999;
+  font-size: 18px;
+  transition: color 0.3s ease;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #007bff;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.login-btn:hover {
+  background-color: #0056b3;
+}
+
+.error-message {
+  color: red;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+    
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="form-container">
+      <h2 class="login-heading">Admin Login</h2>
+
+      <form action="/admin/login" method="POST" onsubmit="return validateForm()">
+        <div class="form-group">
+        <div id="emailError" class="error-message"></div>
+        <input type="email" name="email" id="email" placeholder="Email" />
+        </div>
+        <div class="form-group">
+
+        <div id="passwordError" class="error-message"></div>
+        <div class="password-wrapper">
+        <!-- <div style="position: relative;"> -->
+          <input type="password" name="password" id="password" placeholder="Password" style="padding-right: 40px;" />
+          <i class="fa-solid fa-eye-slash" id="togglePassword"
+            style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-size: 18px; transition: color 0.3s ease;"></i>
+        </div>
+        </div>
+
+
+        <button type="submit" class="login-btn">Login</button>
+      </form>
+    </div>
+
+    <div class="logo-container">
+  <a href="/" style="text-decoration: none;">
+   
+  </a>
+</div>
+
+  <% if (locals.msg && msg.length > 0) { %>
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+      <div id="liveToast" class="toast show align-items-center text-bg-danger border-0" role="alert">
+        <div class="d-flex">
+          <div class="toast-body">
+            <%= msg %>
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Custom JS validation -->
+  <script>
+    function validateForm() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      let isValid = true;
+
+      document.getElementById("emailError").innerText = "";
+      document.getElementById("passwordError").innerText = "";
+
+      // Email validation
+      if (email === "") {
+        document.getElementById("emailError").innerText = "Email is required.";
+        isValid = false;
+      } else if (!/^\S+@\S+\.\S+$/.test(email)) {
+        document.getElementById("emailError").innerText = "Enter a valid email address.";
+        isValid = false;
+      }
+
+      // Password validation
+      if (password === "") {
+        document.getElementById("passwordError").innerText = "Password is required.";
+        isValid = false;
+      }
+
+      return isValid;
+    }
+
+    //Toggle eye
+    // Toggle Password Show/Hide
+const togglePassword = document.getElementById('togglePassword');
+const password = document.getElementById('password');
+
+togglePassword.addEventListener('click', function () {
+  const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+  password.setAttribute('type', type);
+
+  this.classList.toggle('fa-eye');
+  this.classList.toggle('fa-eye-slash');
+});
+
+  </script>
+</body>
+</html>
+<%- include("../../views/partials/admin/footer") %>

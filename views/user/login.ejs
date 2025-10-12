@@ -1,0 +1,55 @@
+
+<%- include('../partials/user/header') %>
+
+<div class="container-fluid">
+  <div class="row vh-100">
+  
+    <!-- Left Image Section -->
+    <div class="col-md-6 d-none d-md-flex align-items-center justify-content-center p-0">
+      <img src="/img/login.jpg" alt="Login Image" class="img-fluid w-100 h-100 object-fit-cover">
+    </div>
+
+    <!-- Right Form Section -->
+    <div class="col-md-6 d-flex align-items-center justify-content-center">
+      <div class="w-75">
+        <h3 class="mb-4 text-center">Login to Your Account</h3>
+
+        <form method="POST" action="/login">
+          <div class="mb-3">
+            <label for="email" class="form-label">Email address</label>
+            <input type="email" name="email" class="form-control" id="email" required />
+            <div id="email-error" class="error-message"></div>
+          </div>
+
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" id="password" required />
+            <div id="password-error" class="error-message"></div>
+          </div>
+          <% if(locals.msg && msg.length>0) { %>
+            <div class="alert alert-danger text-center">
+                <%=msg%>
+            </div>
+         <% } %>
+
+          <div class="mb-3 text-end">
+            <a href="/forgot-password" class="text-decoration-none">Forgot Password?</a>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">Login</button> <br><br>
+          
+        <a href="/auth/google" class="btn btn-danger w-100 mb-3">
+            <i class="fab fa-google me-2"></i> Sign up with Google
+        </a>
+        </form>
+
+        <div class="mt-4 text-center">
+          <p>Don't have an account? <a href="/signup">Register</a></p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<%- include("../partials/user/footer") %>

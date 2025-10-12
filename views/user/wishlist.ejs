@@ -1,0 +1,340 @@
+<%- include("../../views/partials/user/header") %>
+
+    <!-- SweetAlert2 and jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+        /* Reuse sidebar and layout styles from address page */
+        .account-page {
+            display: flex;
+            gap: 40px;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #3a2b3c;
+            color: white;
+            border-radius: 8px;
+            padding: 20px;
+            height: calc(100vh - 150px);
+            position: sticky;
+            top: 80px;
+            flex-shrink: 0;
+        }
+
+        .sidebar h5 {
+            margin-bottom: 30px;
+        }
+
+        .sidebar ul li {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            transition: background 0.2s ease;
+        }
+
+        .sidebar ul li:hover {
+            background-color: #2a2a2a;
+        }
+
+        .sidebar ul li.active {
+            background-color: #2c2c2c;
+            font-weight: bold;
+        }
+
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            display: block;
+        }
+
+        .sidebar ul li i {
+            margin-right: 10px;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .wishlist-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .wishlist-card img {
+            width: 100px;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .wishlist-details h6 {
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .wishlist-actions {
+            margin-left: auto;
+        }
+
+        .wishlist-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: space-between;
+        }
+
+
+        .wishlist-actions .btn {
+            margin-left: 10px;
+        }
+
+        .discount-badge,
+        .stock-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 20px;
+            z-index: 2;
+        }
+
+        .stock-badge {
+
+            background-color: #dc3545;
+        }
+
+        .discount-badge {
+            background-color: #28a745;
+        }
+
+
+        @media (max-width: 768px) {
+            .account-page {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                position: static;
+                height: auto;
+                border-radius: 0;
+            }
+
+            .main-content {
+                max-height: none;
+                overflow: visible;
+            }
+        }
+    </style>
+
+    <div class="container my-5">
+        <div class="account-page">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <h5 class="fw-bold">My Account</h5>
+                <ul class="list-unstyled">
+                    <li class="<%= currentPage === 'profile' ? 'active' : '' %>">
+                        <a href="/userProfile"><i class="fa-regular fa-user"></i>
+                            <%= user.name %>
+                        </a>
+                    </li>
+                    <li class="<%= currentPage === 'address' ? 'active' : '' %>">
+                        <a href="/userAddress"><i class="fa-solid fa-location-dot"></i> Address</a>
+                    </li>
+                    <li class="<%= currentPage === 'orders' ? 'active' : '' %>">
+                        <a href="/orders"><i class="fa-solid fa-receipt"></i> Orders</a>
+                    </li>
+                    <li class="<%= currentPage === 'wishlist' ? 'active' : '' %>">
+                        <a href="/wishlist"><i class="fa-regular fa-heart"></i> Wishlist</a>
+                    </li>
+                    <li class="<%= currentPage === 'coupons' ? 'active' : '' %>">
+                        <a href="/coupons"><i class="fa-solid fa-gift"></i> Coupons</a>
+                    </li>
+                    <li class="<%= currentPage === 'wallet' ? 'active' : '' %>">
+                        <a href="/wallet"><i class="fa-regular fa-credit-card"></i> Wallet</a>
+                    </li>
+                    <li>
+                        <a href="/logout"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Wishlist Main Content -->
+            <div class="main-content shadow-sm w-100">
+                <h5 class="fw-bold mb-4">My Wishlist</h5>
+
+                <% if (wishlist && wishlist.length> 0) { %>
+                    <% wishlist.forEach(product=> { %>
+                        <div class="wishlist-card position-relative">
+                            <!-- Discount badge -->
+                            <% if (product.stock===0) { %>
+                                <span class="badge bg-danger stock-badge">Out of Stock</span>
+                                <% } else if (product.effectiveDiscount && product.effectiveDiscount> 0) { %>
+                                    <span class="badge bg-success discount-badge">-<%= product.effectiveDiscount %>%</span>
+                                    <% } %>
+
+                                       <a href="/productDetails/<%= product._id %>"><img src="<%= product.image %>" alt="<%= product.name %>"></a> 
+
+                                       <div class="wishlist-details w-100">
+                                        <h6>
+                                            <%= product.name %>
+                                        </h6>
+                                        
+                                        <!-- Final discounted price -->
+                                        <div class="text-start mb-2">
+                                          <span class="fw-bold text-success">
+                                            ₹<%= Math.round(product.price - (product.price * product.effectiveDiscount / 100)) %>
+                                          </span>
+                                          <% if (product.effectiveDiscount && product.effectiveDiscount > 0) { %>
+                                            <small class="text-muted text-decoration-line-through ms-2">
+                                              ₹<%= product.price %>
+                                            </small>
+                                          <% } %>
+                                        </div>
+                                    
+                                        <!-- Quantity selector below price -->
+                                        <div class="input-group input-group-sm my-2" style="width: 100px;">
+                                            <button class="btn btn-outline-secondary" type="button"
+                                                onclick="decreaseQty('qty<%= product._id %>')">−</button>
+                                            <input type="text" class="form-control text-center"
+                                                id="qty<%= product._id %>" value="1" readonly>
+                                            <button class="btn btn-outline-secondary" type="button"
+                                                onclick="increaseQty('qty<%= product._id %>', '<%= product.stock %>')">+</button>
+                                        </div>
+                                    </div>
+                                    
+
+                                        <!-- Actions on the right side -->
+                                        <div class="wishlist-actions text-end">
+                                         
+                                            <a class="btn btn-outline-danger btn-sm" href="#" onclick="confirmRemove('<%=product._id%>')">
+                                                Remove
+                                            </a>
+                                            <a class="btn btn-outline-primary btn-sm mt-2 d-block "
+                                                onclick="addToCart('<%= product._id %>', 'qty<%= product._id %>')">
+                                                Add cart
+                                            </a>
+                                        </div>
+                        </div>
+
+                        <% }) %>
+
+
+                            <% } else { %>
+                                <p class="text-muted">Your wishlist is empty.</p>
+                                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        function increaseQty(id, stock = 5) {
+            const input = document.getElementById(id);
+            let qty = parseInt(input.value);
+            if (qty < stock && qty < 5) input.value = qty + 1;
+        }
+
+        function decreaseQty(id) {
+            const input = document.getElementById(id);
+            let qty = parseInt(input.value);
+            if (qty > 1) input.value = qty - 1;
+        }
+
+        function confirmRemove(productId) {
+  Swal.fire({
+    title: "Are you sure?",
+    text: "You won't be able to revert this!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes, remove it",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Make a fetch call to remove from wishlist
+      fetch(`/removeFromWishList?productId=${productId}`, {
+        method: 'GET',
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status) {
+            Swal.fire(
+              'Removed!',
+              'The product has been removed from your wishlist.',
+              'success'
+            ).then(() => {
+              // Optionally reload or remove the product from the DOM
+              window.location.reload(); // or dynamically remove the element instead
+            });
+          } else {
+            Swal.fire(
+              'Failed!',
+              data.message || 'Failed to remove product.',
+              'error'
+            );
+          }
+        })
+        .catch(error => {
+          Swal.fire(
+            'Error!',
+            'Something went wrong while removing the product.',
+            'error'
+          );
+          console.error("Remove wishlist error:", error);
+        });
+    }
+  });
+}
+
+
+        function addToCart(productId, qtyInputId) {
+    const qty = document.getElementById(qtyInputId).value;
+
+    $.ajax({
+        url: '/wishlist/moveToCart',
+        method: 'POST',
+        data: { productId: productId, quantity: qty },
+        success: (response) => {
+            if (response.success) {
+                Swal.fire({
+                    title: "Added to Cart",
+                    text: response.message,
+                    icon: "success",
+                    confirmButtonText: "Go to Cart",
+                    showCancelButton: true,
+                    cancelButtonText: "Continue Shopping"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/cart';
+                    } else {
+                        window.location.reload(); // reload wishlist
+                    }
+                });
+            } else {
+                Swal.fire("Error", response.message, "error");
+            }
+        },
+        error: () => {
+            Swal.fire("Server Error", "Please try again later.", "error");
+        }
+    });
+}
+
+        
+    </script>
+
+    <%- include("../../views/partials/user/footer") %>

@@ -1,0 +1,167 @@
+<%- include("../../views/partials/user/header") %>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+    .account-page {
+        display: flex;
+        gap: 40px;
+    }
+
+    .sidebar {
+        width: 250px;
+        background-color: #3a2b3c;
+        color: white;
+        border-radius: 8px;
+        padding: 20px;
+        height: calc(100vh - 150px);
+        position: sticky;
+        top: 80px;
+        flex-shrink: 0;
+    }
+
+    .sidebar h5 { margin-bottom: 30px; }
+    .sidebar ul li { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.1); border-radius: 5px; }
+    .sidebar ul li:hover { background-color: #2a2a2a; }
+    .sidebar ul li.active { background-color: #2c2c2c; font-weight: bold; }
+    .sidebar ul li a { color: white; text-decoration: none; display: block; }
+    .sidebar ul li i { margin-right: 10px; }
+
+    .main-content {
+        flex-grow: 1;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .coupon-card {
+        background-color: white;
+        border: 1px solid #ddd;
+        border-left: 6px solid #28a745;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        position: relative;
+    }
+
+    .coupon-card h6 {
+        font-weight: bold;
+    }
+
+    .coupon-card p {
+        margin: 5px 0;
+    }
+
+    .copy-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+    }
+
+    @media (max-width: 768px) {
+        .account-page {
+            flex-direction: column;
+        }
+        .sidebar {
+            width: 100%;
+            position: static;
+            height: auto;
+        }
+    }
+</style>
+
+<div class="container my-5">
+    <div class="account-page">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h5 class="fw-bold">My Account</h5>
+            <ul class="list-unstyled">
+                <li class="<%= currentPage === 'profile' ? 'active' : '' %>"><a href="/userProfile"><i class="fa-regular fa-user"></i> <%= user.name %></a></li>
+                <li class="<%= currentPage === 'address' ? 'active' : '' %>"><a href="/userAddress"><i class="fa-solid fa-location-dot"></i> Address</a></li>
+                <li class="<%= currentPage === 'orders' ? 'active' : '' %>"><a href="/orders"><i class="fa-solid fa-receipt"></i> Orders</a></li>
+                <li class="<%= currentPage === 'wishlist' ? 'active' : '' %>"><a href="/wishlist"><i class="fa-regular fa-heart"></i> Wishlist</a></li>
+                <li class="<%= currentPage === 'coupons' ? 'active' : '' %>"><a href="/coupons"><i class="fa-solid fa-gift"></i> Coupons</a></li>
+                <li class="<%= currentPage === 'wallet' ? 'active' : '' %>"><a href="/wallet"><i class="fa-regular fa-credit-card"></i> Wallet</a></li>
+                <li><a href="/logout"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a></li>
+            </ul>
+        </div>
+
+        <!-- Coupons Main Content -->
+        <div class="main-content shadow-sm w-100">
+
+            <!-- Referral Code Card -->
+            <div class="coupon-card border-left border-success mb-4">
+                <h6>🎁 Invite & Earn</h6>
+                <p>Share your referral code with friends. You’ll earn a coupon when they sign up!</p>
+                <div class="d-flex align-items-center mt-2">
+                    <input type="text" class="form-control me-2" id="referralCodeInput" value="<%= user.referralCode %>" readonly style="max-width: 200px;">
+                    <button class="btn btn-sm btn-primary" onclick="copyReferralCode()">Copy Code</button>
+                </div>
+            </div>
+
+            <!-- Referral Coupons -->
+            <h5 class="fw-bold mb-4">Referral Coupons</h5>
+            <% if (referralCoupons && referralCoupons.length > 0) { %>
+                <% referralCoupons.forEach(coupon => { %>
+                    <div class="coupon-card">
+                        <h6><%= coupon.name %> - ₹<%= coupon.offerPrice %> OFF</h6>
+                        <p>Valid till: <%= coupon.formattedExpiry %></p>
+                        <button class="btn btn-sm btn-success copy-btn" onclick="copyToClipboard('<%= coupon.name %>')">Copy Code</button>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <p class="text-muted">No referral coupons available.</p>
+            <% } %>
+
+            <hr>
+
+            <!-- General Coupons -->
+            <h5 class="fw-bold mb-4">Available Coupons</h5>
+            <% if (generalCoupons && generalCoupons.length > 0) { %>
+                <% generalCoupons.forEach(coupon => { %>
+                    <div class="coupon-card">
+                        <h6><%= coupon.name %> - <%= coupon.offerPrice %>% OFF (up to ₹<%= coupon.maxPrice %>)</h6>
+                        <p>Min Purchase: ₹<%= coupon.minimumPrice %></p>
+                        <p>Valid till: <%= coupon.formattedExpiry %></p>
+                        <button class="btn btn-sm btn-success copy-btn" onclick="copyToClipboard('<%= coupon.name %>')">Copy Code</button>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <p class="text-muted">No general coupons available.</p>
+            <% } %>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyToClipboard(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            Swal.fire({
+                title: 'Copied!',
+                text: `Coupon code "${code}" copied to clipboard.`,
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        });
+    }
+
+    function copyReferralCode() {
+        const input = document.getElementById("referralCodeInput");
+        input.select();
+        input.setSelectionRange(0, 99999); // For mobile
+        navigator.clipboard.writeText(input.value).then(() => {
+            Swal.fire({
+                title: 'Copied!',
+                text: `Referral code "${input.value}" copied to clipboard.`,
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        });
+    }
+</script>
+
+<%- include("../../views/partials/user/footer") %>

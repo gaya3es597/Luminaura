@@ -1,0 +1,10 @@
+things to do : validation not working in product add,edit
+	edit category,add category - proper message should be 	passed to user
+	product edit needs to be corrected - update not happening
+	show related products
+	google login issue
+	blocking unblocking
+
+breadcrums
+	
+	
