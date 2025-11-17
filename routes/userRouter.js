@@ -82,9 +82,6 @@ router.get('/logout',userController.logOut);
 router.get('/',isUserBlocked,userController.loadHome)
 router.get('/productDetails/:id',isUserBlocked,productController.productDetails)
 router.get('/allProducts',isUserBlocked,productController.allProducts)
-
-asx Q S  NXB;GPT0 Vv  6547
-
 // Profile Management
 router.get('/userProfile',userAuth,profileController.userProfile)
 router.post('/update-profile',userAuth,upload.single("profileImage"),profileController.updateProfile);
