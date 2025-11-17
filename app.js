@@ -30,7 +30,13 @@ app.use(session({
 // 🔽 Add this line before using userRouter
 app.use(setUserCounts);
 app.use(passport.initialize());
-app.use(passport.session())
+app.use(passport.session());
+
+app.use((req, res, next) => {
+  res.locals.user = req.user || null;
+  next();
+});
+
 
 app.use((req,res,next) => {
     res.set('Cache-Control','no-store')
@@ -45,6 +51,28 @@ app.use(express.static(path.join(__dirname,'public')))
 app.use('/',userRouter);
 app.use('/admin',adminRouter);
 
+// 404 Handler (Route not found)
+app.use((req, res, next) => {
+  res.status(404).render('page-404', {
+    message: 'Page not found',
+    currentPage: null
+  });
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error('❌ Error:', err.stack || err);
+
+  res.status(err.status || 500);
+
+  
+  // render a custom error page
+  res.render('page-404', {
+    message: err.message || 'Something went wrong',
+    status: err.status || 500,
+    currentPage: null
+  });
+});
 
 connectDB();
 

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Payment Failed</title>
+  <link rel="stylesheet" href="/path-to-your-css/styles.css" />
+</head>
+<body>
+  <div class="container text-center mt-5">
+    <h1 class="text-danger">Payment Failed</h1>
+    <p><%= message %></p>
+
+    <% if (order) { %>
+      <h3>Order Details</h3>
+      <p><strong>Order ID:</strong> <%= order.orderId %></p>
+      <p><strong>Order Date:</strong> <%= new Date(order.createdOn).toLocaleDateString() %></p>
+      <p><strong>Payment ID:</strong> <%= paymentId || 'N/A' %></p>
+      
+      <h4>Items:</h4>
+      <ul class="list-group">
+        <% order.orderedItems.forEach(item => { %>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong><%= item.productName %></strong> <br>
+              Quantity: <%= item.quantity %> <br>
+              Price: ₹<%= item.price.toFixed(2) %> each <br>
+              Total: ₹<%= item.totalProductPrice.toFixed(2) %>
+            </div>
+          </li>
+        <% }) %>
+      </ul>
+
+      <p class="mt-3"><strong>Total Price:</strong> ₹<%= order.totalOrderPrice.toFixed(2) %></p>
+      <p><strong>Discount:</strong> ₹<%= order.discount.toFixed(2) %></p>
+      <p><strong>Delivery Charge:</strong> ₹<%= order.deliveryCharge.toFixed(2) %></p>
+      <p><strong>Final Amount:</strong> ₹<%= order.finalAmount.toFixed(2) %></p>
+    <% } else { %>
+      <p>No order details available.</p>
+    <% } %>
+
+    <a href="/orders" class="btn btn-primary mt-3">View Orders</a>
+    <a href="/cart" class="btn btn-secondary mt-3">Try Again</a>
+  </div>
+</body>
+</html>

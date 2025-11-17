@@ -196,7 +196,7 @@
                                         <!-- Final discounted price -->
                                         <div class="text-start mb-2">
                                           <span class="fw-bold text-success">
-                                            ₹<%= Math.round(product.price - (product.price * product.effectiveDiscount / 100)) %>
+                                            ₹<%= product.price - (product.price * product.effectiveDiscount / 100) %>
                                           </span>
                                           <% if (product.effectiveDiscount && product.effectiveDiscount > 0) { %>
                                             <small class="text-muted text-decoration-line-through ms-2">

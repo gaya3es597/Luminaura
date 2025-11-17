@@ -12,13 +12,6 @@ const getOrders = async (req, res) => {
     const { search = '', statusFilter = '', sortBy = '', page = 1 } = req.query;
     const query = {};
 
-    // const search = req.query.search || '';
-    // const page = parseInt(req.query.page) || 1;
-    // const limit = 5; // You can change this as needed
-    // const skip = (page - 1) * limit;
-
-    
-
     if(req.query.search){
       query.$or = [
         { orderId: { $regex: new RegExp(search, 'i') } },

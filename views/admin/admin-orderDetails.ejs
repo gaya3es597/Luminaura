@@ -104,7 +104,7 @@
       </div>
 
       <div class="d-flex gap-2 flex-wrap">
-        <% if (!['cancelled', 'delivered','return_requested' ].includes(order.status)) { %>
+        <% if (!['cancelled', 'delivered','return_requested','failed' ].includes(order.status)) { %>
           <button onclick="updateOrderStatus('<%= order._id %>')" class="btn btn-sm btn-primary">
             Update Status
           </button>
@@ -194,7 +194,7 @@
                 <% if (product.status==='returning' && product.requestStatus==='approved' ) { %>
                   <button onclick="updateReturnStatus('<%= order._id %>', '<%= product.itemId %>')"
                     class="btn btn-sm btn-primary">Update Return Status</button>
-                  <% } else if (!['cancelled', 'delivered' , 'returned' , 'Return_requested' , 'returning'
+                  <% } else if (!['cancelled', 'delivered' , 'returned' , 'Return_requested' , 'returning','failed'
                     ].includes(product.status)) { %>
                     <button onclick="updateStatus('<%= order._id %>', '<%= product.itemId %>')"
                       class="btn btn-sm btn-primary">Update</button>

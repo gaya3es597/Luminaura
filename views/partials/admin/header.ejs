@@ -116,7 +116,10 @@
   </style>
 </head>
 <body>
+ 
   <div class="admin-wrapper">
+     <%  if(typeof showSidebar === 'undefined' || showSidebar === true) { %>
+
     <aside class="sidebar">
       <div class="brand"><span class="gradient-text-1">Lumi</span><span class="gradient-text-1">naura</span></div>
       <a href="/admin/dashboard" class="nav-link"><i class="fa fa-home"></i>Dashboard</a>
@@ -129,6 +132,7 @@
       <a href="/admin/orders" class="nav-link"><i class="fa fa-shopping-cart"></i>Orders</a>
       <!-- <a href="/admin/sales" class="nav-link"><i class="fa fa-chart-line"></i>Sales Report</a> -->
     </aside>
+    <% } %>
 
     <div class="main-content">
       <header class="header">

@@ -77,6 +77,7 @@ const getCartPage = async (req, res) => {
 
 
     const shippingCharges = priceAfterDiscount > 500 ? 0 : 40;
+    
 
     const finalPrice = priceAfterDiscount + shippingCharges;
 

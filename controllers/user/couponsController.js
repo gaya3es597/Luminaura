@@ -43,7 +43,8 @@ const loadCoupon = async (req, res) => {
 
   } catch (error) {
     console.error("Error loading coupons:", error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('errorPage', { message: messages.ERROR.INTERNAL_SERVER_ERROR, error });
+    next(error);
+    // res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('errorPage', { message: messages.ERROR.INTERNAL_SERVER_ERROR, error });
   }
 };
 

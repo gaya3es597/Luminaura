@@ -83,7 +83,7 @@ router.get('/',isUserBlocked,userController.loadHome)
 router.get('/productDetails/:id',isUserBlocked,productController.productDetails)
 router.get('/allProducts',isUserBlocked,productController.allProducts)
 
-
+asx Q S  NXB;GPT0 Vv  6547
 
 // Profile Management
 router.get('/userProfile',userAuth,profileController.userProfile)
@@ -114,7 +114,8 @@ router.get('/check-stock',userAuth, checkoutController.checkStock);
 
 //Order
 router.post('/placeOrder',userAuth,orderController.placeOrder);
-router.get('/placeOrder/retry/:orderId', userAuth,orderController.placeOrder);
+router.get('/retryPayment/:orderId', userAuth, orderController.retryPayment);
+
 router.get('/orders',userAuth,orderController.getOrders);
 router.get('/order-details/:id',userAuth,orderController.orderDetails);
 
@@ -128,6 +129,16 @@ router.get('/orders/invoice/:id',userAuth,orderController.generateInvoice)
 router.post('/create-razorpay-order', userAuth, orderController.createRazorpayOrder);
 router.post('/verify-payment', userAuth, orderController.verifyPayment);
 router.post('/orders/save-failed-order', orderController.saveFailedOrder);
+// Route to handle payment success redirect (e.g., after Razorpay payment)
+router.get('/success', userAuth, orderController.paymentSuccess);
+router.get('/failure', userAuth, orderController.paymentFailure);
+
+// Retry Razorpay order route
+router.post('/retry-razorpay-order/:orderId', userAuth, orderController.retryPayment);
+router.post('/verify-retry-payment',userAuth, orderController.verifyRetryPayment);
+
+
+
 
 
 //Wishlist

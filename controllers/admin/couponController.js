@@ -16,7 +16,7 @@ const getCoupons = async (req, res) => {
         return res.render('admin-coupons', { coupons: formattedCoupons });
     } catch (error) {
         console.log(error);
-        return res.redirect("/pageerror");
+        return res.redirect("/page-404");
     }
 };
   
@@ -28,28 +28,51 @@ function formatDate(date) {
     return `${day}-${month}-${year}`;
 }
 
-const createCoupon = async(req, res) => {
-    try {
-        const { name, startDate, endDate, offer, minPrice ,maxPrice} = req.body;
-    
-        const newCoupon = new couponModel({
-        name,
-        createdOn: new Date(startDate),  // Store as Date object
-        expireOn: new Date(endDate),
-        offerPrice: offer,
-        minimumPrice: minPrice,
-        maxPrice
-        });
-    
-        await newCoupon.save();
-    
-        return res.json({ success: true, message: messages.SUCCESS.COUPON_ADDED });
-    
-    } catch (error) {
-        console.log(error);
-        res.redirect("/pageerror");
+const createCoupon = async (req, res) => {
+  try {
+    const { name, startDate, endDate, offer, minPrice, maxPrice } = req.body;
+
+    // 🔍 Check for existing coupon with same name (case-insensitive)
+    const existingCoupon = await couponModel.findOne({
+      name: { $regex: new RegExp(`^${name}$`, "i") }
+    });
+
+    if (existingCoupon) {
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json({ success: false, message: "Coupon with this name already exists." });
     }
+
+    // ✅ Create and save new coupon
+    const newCoupon = new couponModel({
+      name,
+      createdOn: new Date(startDate),
+      expireOn: new Date(endDate),
+      offerPrice: offer,
+      minimumPrice: minPrice,
+      maxPrice,
+    });
+
+    await newCoupon.save();
+
+    return res.json({ success: true, message: messages.SUCCESS.COUPON_ADDED });
+  } catch (error) {
+    console.error("Error creating coupon:", error);
+
+    // Handle MongoDB duplicate key errors (if `unique: true` in schema)
+    if (error.code === 11000) {
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json({ success: false, message: "Coupon with this name already exists." });
+    }
+
+    // General error fallback
+    return res
+      .status(HttpStatus.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: messages.ERROR.INTERNAL_SERVER_ERROR });
+  }
 };
+
       
 
 const editCoupon = async (req, res) => {

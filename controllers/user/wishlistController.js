@@ -30,7 +30,8 @@ const getWishlist = async (req, res) => {
           // Calculate effective discount
           const productDiscount = product.discount || 0;
           const categoryOffer = product.category?.categoryOffer || 0;
-          const effectiveDiscount = Math.max(productDiscount, categoryOffer);
+           const effectiveDiscount = Math.max(productDiscount, categoryOffer);
+          // product.effectiveDiscount = Math.max(productDiscount, categoryOffer);
 
           return {
             _id: product._id,

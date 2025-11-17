@@ -27,6 +27,7 @@ const adminAuth = (req, res, next) => {
         userModel.findById(req.session.admin)
             .then((admin) => {
                 if (admin && admin.isAdmin) {
+                  res.locals.admin = admin;
                     next()
                 }else{
                     req.session.destroy();

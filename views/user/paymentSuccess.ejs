@@ -1,0 +1,55 @@
+
+<%- include("../../views/partials/user/header") %>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Payment Successful</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+ <div class="container mt-5">
+  <div class="alert alert-success text-center">
+    <h4><%= message %></h4>
+    <p><strong>Order ID:</strong> <%= order.orderId %></p>
+    <p><strong>Payment ID:</strong> <%= paymentId %></p>
+  </div>
+
+  <div class="card">
+    <div class="card-header bg-primary text-white">
+      <h5>Order Summary</h5>
+    </div>
+    <div class="card-body">
+      <% if (order.orderedItems && order.orderedItems.length > 0) { %>
+        <ul class="list-group">
+          <% order.orderedItems.forEach(item => { %>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <strong><%= item.productName %></strong><br>
+                Quantity: <%= item.quantity %> <br>
+                Price: ₹<%= item.price.toFixed(2) %>
+              </div>
+              <% if (item.productImages && item.productImages.length > 0) { %>
+                <!-- <img src="<%= item.productImages[0] || '/images/default-product.png' %>>" alt="Product" style="height: 60px;"> -->
+              <% } %>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+
+      <hr>
+      <p><strong>Subtotal:</strong> ₹<%= order.totalOrderPrice.toFixed(2) %></p>
+      <p><strong>Discount:</strong> - ₹<%= order.discount.toFixed(2) %></p>
+      <p><strong>Delivery:</strong> ₹<%= order.deliveryCharge.toFixed(2) %></p>
+      <h5><strong>Total Paid:</strong> ₹<%= order.finalAmount.toFixed(2) %></h5>
+    </div>
+  </div>
+
+  <a href="/orders" class="btn btn-outline-primary mt-4">View All Orders</a>
+</div>
+
+</body>
+</html>
+<%- include("../../views/partials/user/footer") %>

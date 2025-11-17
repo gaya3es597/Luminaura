@@ -372,7 +372,11 @@
                             <button class="btn btn-primary" id="applyCouponBtn" type="button">Apply</button>
                         </div>
                         <small id="couponFeedback" class="d-none"></small>
-                        <a href="/coupons" class="view-coupons-link">View All Available Coupons</a>
+                        <button type="button" class="view-coupons-link btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#couponsModal">
+  View All Available Coupons
+</button>
+
+
                         
                         <!-- Applied Coupon Display -->
                         <div id="appliedCouponSection" class="applied-coupon-section" style="display: none;">
@@ -425,6 +429,9 @@
                     <button class="btn btn-success btn-place-order w-100 mt-3"> Place Order</button>
                 </div>
 
+              
+
+
             </div>
         </div>
     </div>
@@ -437,7 +444,12 @@
       <div class="modal-content shadow-lg border-0 rounded">
         <div class="modal-header bg-primary text-white rounded-top">
           <h5 class="modal-title" id="walletPaymentModalLabel">Wallet Payment</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button"
+        class="btn btn-sm btn-outline-primary btn-copy-coupon"
+        data-code="<%= couponCode.name %>">
+  Use
+</button>
+
         </div>
         <div class="modal-body">
           <div class="mb-3">
@@ -467,6 +479,40 @@
       </div>
     </div>
   </div>
+
+  <!-- Coupons Modal -->
+<div class="modal fade" id="couponsModal" tabindex="-1" aria-labelledby="couponsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content shadow-lg border-0 rounded">
+      <div class="modal-header bg-primary text-white rounded-top">
+        <h5 class="modal-title" id="couponsModalLabel">Available Coupons</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="list-group">
+          <% if (couponCode && couponCode.length > 0) { %>
+            <% couponCode.forEach(coupon => { %>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <strong><%= coupon.name%></strong> — <%= coupon.description %><br>
+                   <small>
+            Discount: ₹<%= coupon.offerPrice %><% if (coupon.maxPrice) { %> (max ₹<%= coupon.maxPrice %>)<% } %><br>
+            Min Purchase: ₹<%= coupon.minimumPrice %><br>
+            Valid Until: <%= new Date(coupon.expireOn).toLocaleDateString() %>
+          </small>
+                </div>
+                <!-- <button class="btn btn-sm btn-outline-primary btn-copy-coupon" data-code="<%= coupon.code %>">Use</button> -->
+              </li>
+            <% }) %>
+          <% } else { %>
+            <li class="list-group-item text-center text-muted">No coupons available</li>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
   
 
     <!-- Modal for Add/Edit Address -->
@@ -526,6 +572,9 @@
             </form>
         </div>
     </div>
+    <!-- <button class="btn-copy-coupon" data-code="SAVE10">Copy Coupon</button>
+<input id="couponCode" type="text" />
+<button id="applyCouponBtn">Apply</button> -->
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -1017,11 +1066,15 @@ async function verifyPayment(paymentResponse, orderData) {
                 title: 'Payment Successful!',
                 text: `Order ID: ${result.orderId}`,
                 icon: 'success',
-                confirmButtonText: 'View Orders'
+                confirmButtonText: 'OK'
             });
             
-            window.location.href = '/orders';
+            // Redirect to success page with orderId in query string
+        window.location.href = `/success?order_id=${result.orderId}&payment_id=${result.paymentId}`;
+
         } else {
+            window.location.href = `/failure?order_id=${result.orderId}&payment_id=${result.paymentId}&message=${encodeURIComponent('Payment failed')}`;
+
             throw new Error(result.message || 'Payment verification failed');
         }
     } catch (error) {
@@ -1137,7 +1190,64 @@ document.querySelector('.btn-place-order').addEventListener('click', async () =>
         await Swal.fire('Error', error.message || 'An error occurred while placing the order', 'error');
     }
 });
-    
+
+document.querySelectorAll('.btn-copy-coupon').forEach(button => {
+  button.addEventListener('click', () => {
+    const code = button.getAttribute('data-code');
+    const couponInput = document.getElementById('couponCode');
+    couponInput.value = code;
+
+    // Option 1: Automatically trigger apply coupon logic:
+    document.getElementById('applyCouponBtn').click();
+
+    // Option 2: Or just copy and let user click 'Apply'
+    // Optionally show a quick tooltip or alert that code was copied
+  });
+});
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM loaded: attaching coupon handlers');
+  document.querySelectorAll('.btn-copy-coupon').forEach(button => {
+    console.log('Attaching to coupon button:', button);
+    button.addEventListener('click', () => {
+      try {
+        const couponCode = button.getAttribute('data-code');
+        console.log('Coupon code clicked:', couponCode);
+
+        navigator.clipboard.writeText(couponCode).then(() => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Copied!',
+            text: `Coupon code "${couponCode}" copied to clipboard.`,
+            timer: 1500,
+            showConfirmButton: false,
+          });
+
+          const input = document.getElementById('couponCode');
+          if (input) {
+            input.value = couponCode;
+            document.getElementById('applyCouponBtn').click();
+          }
+
+          const modalEl = document.getElementById('couponsModal');
+          const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+          modalInstance.hide();
+
+          modalEl.addEventListener('hidden.bs.modal', () => {
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) backdrop.remove();
+            document.body.classList.remove('modal-open');
+            document.body.style.paddingRight = '';
+          }, { once: true });
+        });
+      } catch (error) {
+        console.error('Error handling coupon button click:', error);
+      }
+    });
+  });
+});
+
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 

@@ -48,6 +48,9 @@
             </div>
          <% } %>
     </div>
+    <div id="error6" class="error-message"></div>
+        <input type="text" id="referralCode" name="referralCode" placeholder="Referral Code (Optional)" />
+
 
     <button type="submit" class="btn btn-primary w-100">Sign Up</button>
   </form>
@@ -75,7 +78,7 @@
     const phoneid = document.getElementById('phone');
     const passid = document.getElementById('password');
     const cpassid = document.getElementById('confirmPassword');
-
+    const referralCodeId = document.getElementById('referralCode');
     const nameError = document.getElementById('name-error');
     const emailError = document.getElementById('email-error');
     const phoneError = document.getElementById('phone-error');
@@ -88,6 +91,18 @@
       console.error("❌ One or more elements not found in DOM.");
       return;
     }
+     function referralValidateChecking() {
+          const refVal = referralCodeId.value.trim();
+          const pattern = /^[a-zA-Z0-9]*$/;
+
+          if (refVal && !pattern.test(refVal)) {
+            error6.style.display = 'block';
+            error6.innerHTML = 'Referral code can only contain letters and numbers';
+          } else {
+            error6.style.display = 'none';
+            error6.innerHTML = '';
+          }
+        }
 
     function nameValidateChecking() {
       const nameval = nameid.value.trim();
@@ -183,6 +198,8 @@
       const emailValid = emailValidateChecking();
       const phoneValid = phoneValidateChecking();
       const passValid = passwordValidateChecking();
+      const referralValid = referralValidateChecking();
+       
 
       if (!nameValid || !emailValid || !phoneValid || !passValid) {
         e.preventDefault();

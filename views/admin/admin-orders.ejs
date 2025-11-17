@@ -86,7 +86,7 @@
                   <% } else if (order.status === 'returning' && order.requestStatus === 'approved') { %>
                     <button onclick="updateReturnStatus('<%= order._id %>')" class="btn btn-sm btn-primary w-100">Update Return Status</button>
               
-                  <% } else if (!['cancelled', 'delivered', 'returned'].includes(order.status.toLowerCase())) { %>
+                  <% } else if (!['cancelled', 'delivered', 'returned','failed'].includes(order.status.toLowerCase())) { %>
                     <button onclick="updateOrderStatus('<%= order._id %>')" class="btn btn-sm btn-warning w-100">Update</button>
                     <button onclick="cancelOrder('<%= order._id %>')" class="btn btn-sm btn-danger w-100">Cancel</button>
                   <% } %>

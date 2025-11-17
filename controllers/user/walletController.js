@@ -8,8 +8,6 @@ const addressModel = require("../../models/addressSchema")
 const Razorpay = require("razorpay")
 const crypto = require("crypto")
 const env = require("dotenv").config()
-const HttpStatus = require('../../constants/httpStatus');
-const messages = require("../../constants/messages")
 
 
 const razorpay = new Razorpay({
@@ -61,7 +59,7 @@ const getWallet = async (req, res) => {
 
   } catch (error) {
     console.error("Error fetching wallet:", error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render('error', { message: messages.ERROR.WALLET_ERROR });
+    res.status(500).render('error', { message: "Something went wrong while fetching your wallet." });
   }
 };
 
@@ -72,7 +70,7 @@ const createWalletRazorpayOrder = async (req, res) => {
     const { amount } = req.body;
 
     if (!amount || amount < 1) {
-      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: messages.ERROR.AMOUNT_ERROR });
+      return res.status(400).json({ success: false, message: "Invalid amount" });
     }
 
     const razorpayOrder = await razorpay.orders.create({
@@ -81,7 +79,7 @@ const createWalletRazorpayOrder = async (req, res) => {
       receipt: "wallet_txn_" + Date.now(),
     });
 
-    res.status(HttpStatus.OK).json({
+    res.status(200).json({
       success: true,
       order_id: razorpayOrder.id,
       amount: razorpayOrder.amount,
@@ -90,7 +88,7 @@ const createWalletRazorpayOrder = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating Razorpay order:", error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: messages.ERROR.INTERNAL_SERVER_ERROR });
+    res.status(500).json({ success: false, message: "Server error creating payment order" });
   }
 };
 
@@ -110,7 +108,7 @@ const verifyPayment = async (req, res) => {
         .digest("hex")
   
       if (razorpay_signature !== expectedSign) {
-        return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: messages.VALIDATION.INVALID_SIGNATURE })
+        return res.status(400).json({ success: false, message: "Invalid signature" })
       }
 
     // Step 2: Get or Create Wallet
@@ -145,11 +143,11 @@ const verifyPayment = async (req, res) => {
       walletBalanceAfter: newBalance
     });
 
-    res.status(HttpStatus.OK).json({ success: true, message: messages.SUCCESS.WALLET_UPDATED });
+    res.status(200).json({ success: true, message: "Payment verified and wallet updated" });
 
   } catch (error) {
     console.error("Error verifying payment:", error);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: messages.ERROR.INTERNAL_SERVER_ERROR });
+    res.status(500).json({ success: false, message: "Server error during payment verification" });
   }
 };
 
@@ -160,10 +158,10 @@ const placeWalletOrder = async (req, res) => {
 
     // 1. Get the selected address
     const userAddressDoc = await addressModel.findOne({ userId });
-    if (!userAddressDoc) return res.status(HttpStatus.NOT_FOUND).json({ message: messages.ERROR.ADDRESS_NOT_FOUND });
+    if (!userAddressDoc) return res.status(404).json({ message: "Address not found" });
 
     const selectedAddress = userAddressDoc.address.find(addr => addr._id.toString() === addressId);
-    if (!selectedAddress) return res.status(HttpStatus.NOT_FOUND).json({ message: messages.ERROR.ADDRESS_NOT_FOUND });
+    if (!selectedAddress) return res.status(404).json({ message: "Selected address not found" });
 
     // 2. Get the cart
     const userCart = await cartModel.findOne({ userId }).populate({
@@ -171,7 +169,7 @@ const placeWalletOrder = async (req, res) => {
       populate: { path: 'category' }
     });
     if (!userCart || userCart.cartItems.length === 0) {
-      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: messages.ERROR.CART_EMPTY});
+      return res.status(400).json({ success: false, message: "Cart is empty" });
     }
 
     // 3. Prepare orderedItems and calculate total
@@ -181,7 +179,7 @@ const placeWalletOrder = async (req, res) => {
     for (const item of userCart.cartItems) {
       const product = item.productId;
       if (!product || product.stock < item.quantity) {
-        return res.json({ success: false, message: `${messages.ERROR.INSUFFICIENT_STOCK} for ${product?.productName || "product"}` });
+        return res.json({ success: false, message: `Insufficient stock for ${product?.productName || "product"}` });
       }
 
       const productDiscount = product.discount || 0;
@@ -215,19 +213,19 @@ const placeWalletOrder = async (req, res) => {
     if (couponCode) {
       const coupon = await couponModel.findOne({ name: couponCode.trim() }); // No need isList here
     
-      if (!coupon) return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: messages.VALIDATION.INVALID_COUPON });
+      if (!coupon) return res.status(400).json({ success: false, message: "Invalid coupon code" });
     
       const now = new Date();
-      if (coupon.expireOn < now) return res.status(400).json({ success: false, message: messages.ERROR.EXPIRED_COUPON });
+      if (coupon.expireOn < now) return res.status(400).json({ success: false, message: "Coupon expired" });
     
       if (coupon.isReferralCoupon) {
         // Referral Coupon logic
         if (coupon.userId.toString() !== userId.toString()) {
-          return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: messages.ERROR.REFERAL_COUPON_ERROR });
+          return res.status(400).json({ success: false, message: "This referral coupon is not for your account" });
         }
     
         if (coupon.isUsed) {
-          return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: messages.ERROR.REFERAL_COUPON_ERROR });
+          return res.status(400).json({ success: false, message: "Referral coupon already used" });
         }
     
         // Apply 25% discount
@@ -242,11 +240,11 @@ const placeWalletOrder = async (req, res) => {
       } else {
         // General Coupon logic
         if (totalPrice < coupon.minimumPrice) {
-          return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: `${messages.ERROR.MIN_ORDER_VALUE_ERROR} ₹${coupon.minimumPrice}` });
+          return res.status(400).json({ success: false, message: `Minimum order value for this coupon is ₹${coupon.minimumPrice}` });
         }
     
         if (coupon.userId.includes(userId)) {
-          return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: messages.ERROR.ALREADY_USED_COUPON });
+          return res.status(400).json({ success: false, message: "Coupon already used" });
         }
     
         discount = (totalPrice * coupon.offerPrice) / 100;
@@ -271,7 +269,7 @@ const placeWalletOrder = async (req, res) => {
     // 5. Wallet check
     const wallet = await walletModel.findOne({ userId });
     if (!wallet || wallet.balance < finalAmount) {
-      return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: messages.ERROR.INSUFFICIENT_BALANCE });
+      return res.status(400).json({ success: false, message: "Insufficient wallet balance" });
     }
 
     // 6. Create Order
@@ -321,11 +319,11 @@ const placeWalletOrder = async (req, res) => {
     userCart.cartItems = [];
     await userCart.save();
 
-    res.status(HttpStatus.CREATED).json({ success: true, message: messages.SUCCESS.ORDER_PLACED, orderIds: [newOrder.orderId] });
+    res.status(201).json({ success: true, message: "Order placed successfully", orderIds: [newOrder.orderId] });
 
   } catch (err) {
     console.error("Wallet order error:", err);
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: messages.ERROR.INSUFFICIENT_BALANCE });
+    res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };
 

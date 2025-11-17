@@ -1,0 +1,66 @@
+<%- include("../../views/partials/admin/header") %>
+
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Ledger Book</h3>
+    <a href="/admin/dashboard" class="btn btn-secondary">
+      <i class="fa fa-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Transaction History</h5>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-striped table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Order ID</th>
+            <th>Payment Method</th>
+            <th>Status</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% ledgerData.forEach(txn => { %>
+            <tr>
+              <td><%= new Date(txn.createdOn).toLocaleDateString() %></td>
+              <td><%= txn.orderId %></td>
+              <td><%= txn.paymentMethod.toUpperCase() %></td>
+              <td>
+                <% if (txn.status === 'delivered') { %>
+                  <span class="badge bg-success">Delivered</span>
+                <% } else { %>
+                  <span class="badge bg-danger"><%= txn.status %></span>
+                <% } %>
+              </td>
+              <td>
+                <% if (txn.amount >= 0) { %>
+                  <span class="text-success">+ ₹<%= txn.amount.toFixed(2) %></span>
+                <% } else { %>
+                  <span class="text-danger">- ₹<%= Math.abs(txn.amount).toFixed(2) %></span>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+
+      <div class="card-footer d-flex justify-content-center py-3">
+        <nav>
+          <ul class="pagination mb-0">
+            <% for (let i = 1; i <= totalPages; i++) { %>
+              <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                <a class="page-link" href="/admin/ledger?page=<%= i %>"><%= i %></a>
+              </li>
+            <% } %>
+          </ul>
+        </nav>
+      </div>
+      
+
+    </div>
+  </div>
+</div>

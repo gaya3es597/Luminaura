@@ -16,7 +16,7 @@ const loadLogin = async (req, res) => {
     if (req.session.admin) {
         return res.redirect('/admin/dashboard')
     }
-    res.render('adminLogin')
+    res.render('adminLogin' , {showSidebar: false})
 
 }
 
@@ -105,14 +105,86 @@ const getSalesChartData = async (filter) => {
     return { labels, data };
 };
 
+const loadSalesPage = async (req, res) => {
+  try {
+    const reportType = req.query.reportType || 'daily';
+    const startDate = req.query.startDate ? new Date(req.query.startDate) : null;
+    const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
+
+    let matchStage = { status: "delivered" };
+
+    // Handle date filters
+    const now = new Date();
+    if (reportType === 'daily') {
+      matchStage.createdOn = { $gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()) };
+    } else if (reportType === 'weekly') {
+      const weekAgo = new Date();
+      weekAgo.setDate(now.getDate() - 7);
+      matchStage.createdOn = { $gte: weekAgo };
+    } else if (reportType === 'monthly') {
+      const monthAgo = new Date();
+      monthAgo.setMonth(now.getMonth() - 1);
+      matchStage.createdOn = { $gte: monthAgo };
+    } else if (reportType === 'custom' && startDate && endDate) {
+      matchStage.createdOn = { $gte: startDate, $lte: endDate };
+    }
+
+    // Fetch orders
+    const orders = await Order.aggregate([
+      { $match: matchStage },
+      {
+        $project: {
+          orderId: 1,
+          paymentMethod: 1,
+          finalAmount: 1,
+          lessPrice: 1,
+          discount: 1,
+          createdOn: 1
+        }
+      }
+    ]);
+
+    const totalSales = orders.reduce((sum, o) => sum + o.finalAmount, 0);
+    const orderCount = orders.length;
+    const lessPrices = orders.reduce((sum, o) => sum + (o.lessPrice || 0), 0);
+    const discounts = orders.reduce((sum, o) => sum + (o.discount || 0), 0);
+
+    const salesData = {
+      totalSales,
+      orderCount,
+      lessPrices,
+      discounts,
+      sales: orders.map(o => ({
+        date: o.createdOn,
+        orderId: o.orderId,
+        amount: o.finalAmount,
+        lessPrice: o.lessPrice || 0,
+        discount: o.discount || 0,
+        paymentMethod: o.paymentMethod
+      }))
+    };
+
+    // sending selectedReportType
+    res.render("sales-report", {
+      selectedReportType: reportType,
+      startDate: req.query.startDate || '',
+      endDate: req.query.endDate || '',
+      salesData
+    });
+
+  } catch (error) {
+    console.error("Error loading sales report:", error);
+    res.status(500).render("admin-error", { message: "Failed to load sales report" });
+  }
+};
+
+
 const loadDashboard = async (req, res) => {
     try {
         const filter = req.query.filter || 'monthly';
-
-        // Sales chart data
         const salesData = await getSalesChartData(filter);
 
-        // Top 10 Products
+        // Top products
         const topProducts = await Order.aggregate([
             { $unwind: "$orderedItems" },
             { $match: { status: "delivered" } },
@@ -141,7 +213,7 @@ const loadDashboard = async (req, res) => {
             }
         ]);
 
-        // Top 10 Categories
+        // Top categories
         const topCategories = await Order.aggregate([
             { $unwind: "$orderedItems" },
             { $match: { status: "delivered" } },
@@ -179,7 +251,6 @@ const loadDashboard = async (req, res) => {
             }
         ]);
 
-        console.log("Total products :" + topProducts)
         res.render("dashboard", {
             filter,
             salesChartLabels: salesData.labels,
@@ -187,13 +258,11 @@ const loadDashboard = async (req, res) => {
             topProducts,
             topCategories,
         });
-
     } catch (err) {
         console.error("Error loading dashboard:", err);
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: messages.ERROR.INVALID_CREDENTIALS });
+        res.status(500).render("admin-error", { message: "Failed to load dashboard" });
     }
 };
-
 
 const ledgerBook = async (req, res) => {
     try {
@@ -286,7 +355,9 @@ module.exports = {
     loadLogin,
     adminLogin,
     loadDashboard,
+    loadSalesPage,
     pageerror,
     logout,
-    ledgerBook
+    ledgerBook,
+    getSalesChartData
 }

@@ -8,13 +8,30 @@
           <a href="/admin/sales" class="btn btn-primary">
             <i class="fa fa-file-invoice-dollar"></i> View Sales Report
           </a>
-          <!-- <a href="/admin/ledger" class="btn btn-secondary">
+          <a href="/admin/ledger" class="btn btn-secondary">
             <i class="fa fa-book"></i> Ledger Book
-          </a> -->
+          </a>
         </div>
       </div>
       
-  Top 10 Products
+
+  <!-- Sales Chart Section -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Sales Overview</h5>
+      <select id="salesFilter" class="form-select w-auto">
+  <option value="monthly" <%= filter === 'monthly' ? 'selected' : '' %>>Monthly</option>
+  <option value="yearly" <%= filter === 'yearly' ? 'selected' : '' %>>Yearly</option>
+  <option value="last30" <%= filter === 'last30' ? 'selected' : '' %>>Last 30 Days</option>
+</select>
+
+    </div>
+    <div class="card-body">
+      <canvas id="salesChart" height="100"></canvas>
+    </div>
+  </div>
+
+  <!-- Top 10 Products -->
   <div class="card mb-4">
     <div class="card-header">
       <h5 class="mb-0">Top 10 Best Selling Products</h5>
@@ -41,7 +58,7 @@
     </div>
   </div>
 
-  Top 10 Categories 
+  <!-- Top 10 Categories -->
   <div class="card mb-4">
     <div class="card-header">
       <h5 class="mb-0">Top 10 Best Selling Categories</h5>
@@ -68,7 +85,9 @@
     </div>
   </div>
 
+ 
 
+</div>
 
 <!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

@@ -1,384 +1,397 @@
 <%- include("../../views/partials/admin/header") %>
 
-<div class="p-4">
-  <h3 class="mb-4">Manage Coupons</h3>
+  <div class="p-4">
+    <h3 class="mb-4">Manage Coupons</h3>
 
-  <!-- Coupon Form -->
-  <form id="couponForm" onsubmit="submitCoupon(event)" class="row g-3 mb-5 bg-white p-4 rounded shadow-sm">
-    <div class="col-md-4">
-      
-      <label for="name" class="form-label">Coupon Name</label>
-      <div id="errorName" class="text-danger small mb-1"></div>
-      <input type="text" class="form-control" id="name" name="name" >
-    </div>
-    <div class="col-md-3">
-      
-      <label for="startDate" class="form-label">Start Date</label>
-      <div id="errorStartDate" class="text-danger small mb-1"></div>
-      <input type="date" class="form-control" id="startDate" name="startDate" >
-    </div>
-    <div class="col-md-3">
-      <label for="endDate" class="form-label">End Date</label>
-      <div id="errorEndDate" class="text-danger small mb-1"></div>
-      <input type="date" class="form-control" id="endDate" name="endDate" >
-    </div>
-    <div class="col-md-3">
-      <label for="offer" class="form-label">Coupon Discount(%)</label>
-      <div id="errorOffer" class="text-danger small mb-1"></div>
-      <input type="number" class="form-control" id="offer" name="offer" >
-    </div>
-    <div class="col-md-3">
-    
-      <label for="minPrice" class="form-label">Minimum Purchase Amount</label>
-      <div id="errorMinPrice" class="text-danger small mb-1"></div>
-      <input type="number" class="form-control" id="minPrice" name="minPrice" >
-    </div>
+    <!-- Coupon Form -->
+    <form id="couponForm" onsubmit="submitCoupon(event)" class="row g-3 mb-5 bg-white p-4 rounded shadow-sm">
+      <div class="col-md-4">
 
-    <div class="col-md-3">
-      <label for="maxPrice" class="form-label">Maximum Discount </label>
-      <div id="errorMaxPrice" class="text-danger small mb-1"></div>
-      <input type="number" class="form-control" id="maxPrice" name="maxPrice" >
-    </div>
-    
-    <div class="col-12">
-      <button type="submit" class="btn custom-pink-btn">Add Coupon</button>
-    </div>
-  </form>
+        <label for="name" class="form-label">Coupon Name</label>
+        <div id="errorName" class="text-danger small mb-1"></div>
+        <input type="text" class="form-control" id="name" name="name">
+      </div>
+      <div class="col-md-3">
 
-  <!-- Coupons List -->
-  <div class="bg-white p-4 rounded shadow-sm">
-    <h5 class="mb-3">Available Coupons</h5>
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>Coupon Name</th>
-          <th>Start Date</th>
-          <th>End Date</th>
-          <th>Offer Price</th>
-          <th>Minimum Price</th>
-          <th>Max Price</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="couponTableBody">
-        <% if (coupons.length > 0) { %>
-          <% coupons.forEach(coupon => { %>
-            <tr>
-              <td><%= coupon.name %></td>
-              <td><%= coupon.createdOn %></td>
-              <td><%= coupon.expireOn %></td>
-              <td><%= coupon.offerPrice %></td>
-              <td><%= coupon.minimumPrice %></td>
-              <td><%= coupon.maxPrice %></td>
-              <td>
-                <button class="btn btn-primary btn-sm me-2" data-coupon="<%= encodeURIComponent(JSON.stringify(coupon)) %>" onclick="openEditModalFromButton(this)">
-                  <i class="fa fa-edit"></i>
-                </button>
-                
-                 <button 
-                    class="btn btn-danger btn-sm" 
-                    onclick="deleteCoupon('<%= coupon._id %>')">
-                    <i class="fa fa-trash"></i>
-                </button>
+        <label for="startDate" class="form-label">Start Date</label>
+        <div id="errorStartDate" class="text-danger small mb-1"></div>
+        <input type="date" class="form-control" id="startDate" name="startDate">
+      </div>
+      <div class="col-md-3">
+        <label for="endDate" class="form-label">End Date</label>
+        <div id="errorEndDate" class="text-danger small mb-1"></div>
+        <input type="date" class="form-control" id="endDate" name="endDate">
+      </div>
+      <div class="col-md-3">
+        <label for="offer" class="form-label">Coupon Discount(%)</label>
+        <div id="errorOffer" class="text-danger small mb-1"></div>
+        <input type="number" class="form-control" id="offer" name="offer">
+      </div>
+      <div class="col-md-3">
 
-              </td>
-            </tr>
-          <% }) %>
-        <% } else { %>
-          <tr>
-            <td colspan="6" class="text-center text-muted">No coupons available.</td>
-          </tr>
-        <% } %>
-      </tbody>
-      
-    </table>
-  </div>
-</div>
+        <label for="minPrice" class="form-label">Minimum Purchase Amount</label>
+        <div id="errorMinPrice" class="text-danger small mb-1"></div>
+        <input type="number" class="form-control" id="minPrice" name="minPrice">
+      </div>
 
-<!-- Edit Coupon Modal -->
-<div class="modal fade" id="editCouponModal" tabindex="-1" aria-labelledby="editCouponLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <form id="editCouponForm" onsubmit="submitEditCoupon(event)">
-      <input type="hidden" name="id" id="editId">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="editCouponLabel">Edit Coupon</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label for="editName" class="form-label">Coupon Name</label>
-            <div id="errorEditName" class="text-danger small mb-1"></div>
-            <input type="text" class="form-control" name="name" id="editName" >
-          </div>
-          <div class="mb-3">
-            <label for="editStart" class="form-label">Start Date</label>
-            <div id="errorEditStartDate" class="text-danger small mb-1"></div>
-            <input type="date" class="form-control" name="startDate" id="editStart" >
-          </div>
-          <div class="mb-3">
-            <label for="editEnd" class="form-label">End Date</label>
-            <div id="errorEditEndDate" class="text-danger small mb-1"></div>
-            <input type="date" class="form-control" name="endDate" id="editEnd" >
-          </div>
-          <div class="mb-3">
-            <label for="editOffer" class="form-label">Coupon Discount</label>
-            <div id="errorEditOffer" class="text-danger small mb-1"></div>
-            <input type="number" class="form-control" name="offerPrice" id="editOffer" >
-          </div>
-          <div class="mb-3">
-            <label for="editMin" class="form-label">Minimum Price</label>
-            <div id="errorEditMinPrice" class="text-danger small mb-1"></div>
-            <input type="number" class="form-control" name="minPrice" id="editMin" >
-          </div>
-          <div class="mb-3">
-            <label for="editMax" class="form-label">Maximum Price</label>
-            <div id="errorEditMaxPrice" class="text-danger small mb-1"></div>
-            <input type="number" class="form-control" name="maxPrice" id="editMax" >
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn  custom-pink-btn" type="submit">Save changes</button>
-        </div>
+      <div class="col-md-3">
+        <label for="maxPrice" class="form-label">Maximum Discount </label>
+        <div id="errorMaxPrice" class="text-danger small mb-1"></div>
+        <input type="number" class="form-control" id="maxPrice" name="maxPrice">
+      </div>
+
+      <div class="col-12">
+        <button type="submit" class="btn custom-pink-btn">Add Coupon</button>
       </div>
     </form>
+
+    <!-- Coupons List -->
+    <div class="bg-white p-4 rounded shadow-sm">
+      <h5 class="mb-3">Available Coupons</h5>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Coupon Name</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Offer Price</th>
+            <th>Minimum Price</th>
+            <th>Max Price</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="couponTableBody">
+          <% if (coupons.length> 0) { %>
+            <% coupons.forEach(coupon=> { %>
+              <tr>
+                <td>
+                  <%= coupon.name %>
+                </td>
+                <td>
+                  <%= coupon.createdOn %>
+                </td>
+                <td>
+                  <%= coupon.expireOn %>
+                </td>
+                <td>
+                  <%= coupon.offerPrice %>
+                </td>
+                <td>
+                  <%= coupon.minimumPrice %>
+                </td>
+                <td>
+                  <%= coupon.maxPrice %>
+                </td>
+                <td>
+                  <button class="btn btn-primary btn-sm me-2"
+                    data-coupon="<%= encodeURIComponent(JSON.stringify(coupon)) %>"
+                    onclick="openEditModalFromButton(this)">
+                    <i class="fa fa-edit"></i>
+                  </button>
+
+                  <button class="btn btn-danger btn-sm" onclick="deleteCoupon('<%= coupon._id %>')">
+                    <i class="fa fa-trash"></i>
+                  </button>
+
+                </td>
+              </tr>
+              <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="6" class="text-center text-muted">No coupons available.</td>
+                  </tr>
+                  <% } %>
+        </tbody>
+
+      </table>
+    </div>
   </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Edit Coupon Modal -->
+  <div class="modal fade" id="editCouponModal" tabindex="-1" aria-labelledby="editCouponLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form id="editCouponForm" onsubmit="submitEditCoupon(event)">
+        <input type="hidden" name="id" id="editId">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editCouponLabel">Edit Coupon</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="editName" class="form-label">Coupon Name</label>
+              <div id="errorEditName" class="text-danger small mb-1"></div>
+              <input type="text" class="form-control" name="name" id="editName">
+            </div>
+            <div class="mb-3">
+              <label for="editStart" class="form-label">Start Date</label>
+              <div id="errorEditStartDate" class="text-danger small mb-1"></div>
+              <input type="date" class="form-control" name="startDate" id="editStart">
+            </div>
+            <div class="mb-3">
+              <label for="editEnd" class="form-label">End Date</label>
+              <div id="errorEditEndDate" class="text-danger small mb-1"></div>
+              <input type="date" class="form-control" name="endDate" id="editEnd">
+            </div>
+            <div class="mb-3">
+              <label for="editOffer" class="form-label">Coupon Discount</label>
+              <div id="errorEditOffer" class="text-danger small mb-1"></div>
+              <input type="number" class="form-control" name="offerPrice" id="editOffer">
+            </div>
+            <div class="mb-3">
+              <label for="editMin" class="form-label">Minimum Price</label>
+              <div id="errorEditMinPrice" class="text-danger small mb-1"></div>
+              <input type="number" class="form-control" name="minPrice" id="editMin">
+            </div>
+            <div class="mb-3">
+              <label for="editMax" class="form-label">Maximum Price</label>
+              <div id="errorEditMaxPrice" class="text-danger small mb-1"></div>
+              <input type="number" class="form-control" name="maxPrice" id="editMax">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn  custom-pink-btn" type="submit">Save changes</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 
-<script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
 
     function openEditModalFromButton(button) {
-        const coupon = JSON.parse(decodeURIComponent(button.dataset.coupon));
-        openEditModal(coupon);
+      const coupon = JSON.parse(decodeURIComponent(button.dataset.coupon));
+      openEditModal(coupon);
     }
 
     function formatDateForInput(dateStr) {
-  const date = new Date(dateStr);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${day}-${month}`;
-}
-
-  function openEditModal(coupon) {
-    document.getElementById('editId').value = coupon._id;
-    document.getElementById('editName').value = coupon.name;
-    document.getElementById('editStart').value =formatDateForInput(coupon.createdOn);
-    document.getElementById('editEnd').value = formatDateForInput(coupon.expireOn);
-    document.getElementById('editOffer').value = coupon.offerPrice;
-    document.getElementById('editMin').value = coupon.minimumPrice;
-    document.getElementById('editMax').value = coupon.maxPrice;
-    const editModal = new bootstrap.Modal(document.getElementById('editCouponModal'));
-    editModal.show();
-  }
-
-  async function submitCoupon(event) {
-    event.preventDefault();
-
-    // Clear previous errors
-    ['Name', 'StartDate', 'EndDate', 'Offer', 'MinPrice', 'MaxPrice'].forEach(field => {
-      document.getElementById('error' + field).textContent = '';
-    });
-
-    const name = document.getElementById('name').value.trim();
-    const startDate = document.getElementById('startDate').value;
-    const endDate = document.getElementById('endDate').value;
-    const offer = document.getElementById('offer').value.trim();
-    const minPrice = document.getElementById('minPrice').value.trim();
-    const maxPrice = document.getElementById('maxPrice').value.trim();
-
-    let hasError = false;
-
-    if (!name) {
-      document.getElementById('errorName').textContent = 'Coupon name is required.';
-      hasError = true;
-    }
-    if (!startDate) {
-      document.getElementById('errorStartDate').textContent = 'Start date is required.';
-      hasError = true;
-    }
-    if (!endDate) {
-      document.getElementById('errorEndDate').textContent = 'End date is required.';
-      hasError = true;
-    } else if (startDate && new Date(endDate) < new Date(startDate)) {
-      document.getElementById('errorEndDate').textContent = 'End date cannot be before start date.';
-      hasError = true;
-    }
-    if (!offer || isNaN(offer) || offer <= 0) {
-      document.getElementById('errorOffer').textContent = 'Valid offer price is required.';
-      hasError = true;
-    }
-    if (!minPrice || isNaN(minPrice) || minPrice <= 0) {
-      document.getElementById('errorMinPrice').textContent = 'Valid minimum price is required.';
-      hasError = true;
-    }
-    if (!maxPrice || isNaN(maxPrice) || maxPrice <= 0) {
-      document.getElementById('errorMaxPrice').textContent = 'Valid maximum price is required.';
-      hasError = true;
+      const date = new Date(dateStr);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${day}-${month}`;
     }
 
-    if (hasError) return;
+    function openEditModal(coupon) {
+      document.getElementById('editId').value = coupon._id;
+      document.getElementById('editName').value = coupon.name;
+      document.getElementById('editStart').value = formatDateForInput(coupon.createdOn);
+      document.getElementById('editEnd').value = formatDateForInput(coupon.expireOn);
+      document.getElementById('editOffer').value = coupon.offerPrice;
+      document.getElementById('editMin').value = coupon.minimumPrice;
+      document.getElementById('editMax').value = coupon.maxPrice;
+      const editModal = new bootstrap.Modal(document.getElementById('editCouponModal'));
+      editModal.show();
+    }
 
-    // All validations passed, submit the form
-    try {
-      const response = await fetch('/admin/createCoupon', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, startDate, endDate, offer, minPrice, maxPrice })
+    async function submitCoupon(event) {
+      event.preventDefault();
+
+      // Clear previous errors
+      ['Name', 'StartDate', 'EndDate', 'Offer', 'MinPrice', 'MaxPrice'].forEach(field => {
+        document.getElementById('error' + field).textContent = '';
       });
 
-      if (response.ok) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Coupon Added!',
-          showConfirmButton: false,
-          timer: 1500
-        }).then(() => {
-          window.location.reload();
-        });
-      } else {
-        const errorMsg = await response.text();
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: errorMsg || 'Failed to add coupon'
-        });
+      const name = document.getElementById('name').value.trim();
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const offer = document.getElementById('offer').value.trim();
+      const minPrice = document.getElementById('minPrice').value.trim();
+      const maxPrice = document.getElementById('maxPrice').value.trim();
+
+      let hasError = false;
+
+      if (!name) {
+        document.getElementById('errorName').textContent = 'Coupon name is required.';
+        hasError = true;
       }
-    } catch (err) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Something went wrong.'
-      });
-      console.error(err);
-    }
-  }
-
-    async function submitEditCoupon(event) {
-        event.preventDefault();
-
-        // Clear old error messages
-        ['Name', 'StartDate', 'EndDate', 'Offer', 'MinPrice', 'MaxPrice'].forEach(field => {
-            document.getElementById('errorEdit' + field).textContent = '';
-        });
-
-        const name = document.getElementById('editName').value.trim();
-        const startDate = document.getElementById('editStart').value;
-        const endDate = document.getElementById('editEnd').value;
-        const offer = document.getElementById('editOffer').value.trim();
-        const minPrice = document.getElementById('editMin').value.trim();
-        const maxPrice = document.getElementById('editMax').value.trim();
-        const id = document.getElementById('editId').value;
-
-
-        let hasError = false;
-
-    if (!name) {
-        document.getElementById('errorEditName').textContent = 'Coupon name is required.';
+      if (!startDate) {
+        document.getElementById('errorStartDate').textContent = 'Start date is required.';
         hasError = true;
-    }
-    if (!startDate) {
-        document.getElementById('errorEditStartDate').textContent = 'Start date is required.';
+      }
+      if (!endDate) {
+        document.getElementById('errorEndDate').textContent = 'End date is required.';
         hasError = true;
-    }
-    if (!endDate) {
-        document.getElementById('errorEditEndDate').textContent = 'End date is required.';
+      } else if (startDate && new Date(endDate) < new Date(startDate)) {
+        document.getElementById('errorEndDate').textContent = 'End date cannot be before start date.';
         hasError = true;
-    } else if (startDate && new Date(endDate) < new Date(startDate)) {
-        document.getElementById('errorEditEndDate').textContent = 'End date cannot be before start date.';
+      }
+      if (!offer || isNaN(offer) || offer <= 0) {
+        document.getElementById('errorOffer').textContent = 'Valid offer price is required.';
         hasError = true;
-    }
-    if (!offer || isNaN(offer) || offer <= 0) {
-        document.getElementById('errorEditOffer').textContent = 'Valid offer price is required.';
+      }
+      if (!minPrice || isNaN(minPrice) || minPrice <= 0) {
+        document.getElementById('errorMinPrice').textContent = 'Valid minimum price is required.';
         hasError = true;
-    }
-    if (!minPrice || isNaN(minPrice) || minPrice <= 0) {
-        document.getElementById('errorEditMinPrice').textContent = 'Valid minimum price is required.';
+      }
+      if (!maxPrice || isNaN(maxPrice) || maxPrice <= 0) {
+        document.getElementById('errorMaxPrice').textContent = 'Valid maximum price is required.';
         hasError = true;
-    }
-    if (!maxPrice || isNaN(maxPrice) || maxPrice <= 0) {
-      document.getElementById('errorEditMaxPrice').textContent = 'Valid maximum price is required.';
-      hasError = true;
-    }
+      }
 
-    if (hasError) return;
+      if (hasError) return;
 
-    // All validations passed, submit via fetch
-    try {
-        const response = await fetch('/admin/edit-coupon', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, name, startDate, endDate, offerPrice: offer, minPrice, maxPrice })
+      // All validations passed, submit the form
+      try {
+        const response = await fetch('/admin/createCoupon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, startDate, endDate, offer, minPrice, maxPrice })
         });
 
         if (response.ok) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Coupon Updated!',
-          showConfirmButton: false,
-          timer: 1500
-        }).then(() => {
-          window.location.reload();
-        });
-      } else {
-        const errorMsg = await response.text();
+          Swal.fire({
+            icon: 'success',
+            title: 'Coupon Added!',
+            showConfirmButton: false,
+            timer: 1500
+          }).then(() => {
+            window.location.reload();
+          });
+        } else {
+          const errorData = await response.json();
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: errorData.message || 'Failed to add coupon'
+          });
+        }
+
+      } catch (err) {
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: errorMsg || 'Failed to add coupon'
+          text: 'Something went wrong.'
         });
+        console.error(err);
       }
-    } catch (err) {
+    }
+
+    async function submitEditCoupon(event) {
+      event.preventDefault();
+
+      // Clear old error messages
+      ['Name', 'StartDate', 'EndDate', 'Offer', 'MinPrice', 'MaxPrice'].forEach(field => {
+        document.getElementById('errorEdit' + field).textContent = '';
+      });
+
+      const name = document.getElementById('editName').value.trim();
+      const startDate = document.getElementById('editStart').value;
+      const endDate = document.getElementById('editEnd').value;
+      const offer = document.getElementById('editOffer').value.trim();
+      const minPrice = document.getElementById('editMin').value.trim();
+      const maxPrice = document.getElementById('editMax').value.trim();
+      const id = document.getElementById('editId').value;
+
+
+      let hasError = false;
+
+      if (!name) {
+        document.getElementById('errorEditName').textContent = 'Coupon name is required.';
+        hasError = true;
+      }
+      if (!startDate) {
+        document.getElementById('errorEditStartDate').textContent = 'Start date is required.';
+        hasError = true;
+      }
+      if (!endDate) {
+        document.getElementById('errorEditEndDate').textContent = 'End date is required.';
+        hasError = true;
+      } else if (startDate && new Date(endDate) < new Date(startDate)) {
+        document.getElementById('errorEditEndDate').textContent = 'End date cannot be before start date.';
+        hasError = true;
+      }
+      if (!offer || isNaN(offer) || offer <= 0) {
+        document.getElementById('errorEditOffer').textContent = 'Valid offer price is required.';
+        hasError = true;
+      }
+      if (!minPrice || isNaN(minPrice) || minPrice <= 0) {
+        document.getElementById('errorEditMinPrice').textContent = 'Valid minimum price is required.';
+        hasError = true;
+      }
+      if (!maxPrice || isNaN(maxPrice) || maxPrice <= 0) {
+        document.getElementById('errorEditMaxPrice').textContent = 'Valid maximum price is required.';
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      // All validations passed, submit via fetch
+      try {
+        const response = await fetch('/admin/edit-coupon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, name, startDate, endDate, offerPrice: offer, minPrice, maxPrice })
+        });
+
+        if (response.ok) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Coupon Updated!',
+            showConfirmButton: false,
+            timer: 1500
+          }).then(() => {
+            window.location.reload();
+          });
+        } else {
+          const errorMsg = await response.text();
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: errorMsg || 'Failed to add coupon'
+          });
+        }
+      } catch (err) {
         console.error(err);
         Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Something went wrong.'
+          icon: 'error',
+          title: 'Error',
+          text: 'Something went wrong.'
         });
-    }
+      }
     }
 
     async function deleteCoupon(couponId) {
-  const result = await Swal.fire({
-    title: 'Are you sure?',
-    text: "This coupon will be permanently deleted.",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#6c757d',
-    confirmButtonText: 'Yes, delete it!'
-  });
-
-  if (result.isConfirmed) {
-    try {
-      const response = await fetch(`/admin/delete-coupon/${couponId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: "This coupon will be permanently deleted.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete it!'
       });
 
-      if (response.ok) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Deleted!',
-          text: 'Coupon has been deleted.',
-          timer: 1500,
-          showConfirmButton: false
-        }).then(() => window.location.reload());
-      } else {
-        const err = await response.text();
-        Swal.fire('Error', err || 'Failed to delete coupon.', 'error');
+      if (result.isConfirmed) {
+        try {
+          const response = await fetch(`/admin/delete-coupon/${couponId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Deleted!',
+              text: 'Coupon has been deleted.',
+              timer: 1500,
+              showConfirmButton: false
+            }).then(() => window.location.reload());
+          } else {
+            const err = await response.text();
+            Swal.fire('Error', err || 'Failed to delete coupon.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          Swal.fire('Error', 'Something went wrong.', 'error');
+        }
       }
-    } catch (err) {
-      console.error(err);
-      Swal.fire('Error', 'Something went wrong.', 'error');
     }
-  }
-}
 
 
-</script>
+  </script>
